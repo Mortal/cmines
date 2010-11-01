@@ -33,6 +33,7 @@ static struct Tile *tiles;
 static unsigned int tilecount;
 static unsigned int maxneighbours;
 
+/* Some statistics. */
 static unsigned int mines;
 static unsigned int presseds;
 static unsigned int flaggeds;
@@ -40,17 +41,32 @@ static unsigned int flaggeds;
 static unsigned int outputwidth;
 static unsigned int outputheight;
 
-/* Coordinate sets. tilecount*dimcount Coordinates.
+/* Coordinate sets. Contains tilecount*dimcount Coordinates.
  * Accessed via idxtocoords and coordstoidx. */
 static Coordinate *coordinatesets;
 
+/* Get the column and row of the tile in the terminal/ncurses output. */
 int outputcolumn(Coordinate *tile);
 int outputrow(Coordinate *tile);
-void alloctiles();
+
+/* Convert tile index to coordinates. Returns a pointer into the huge
+ * `coordinatesets' array. */
 Coordinate *idxtocoords(int idx);
+
+/* Convert coordinates to tile index. When passed a pointer into
+ * `coordinatesets', calculates index by pointer arithmetic. */
 unsigned int coordstoidx(Coordinate *c);
+
+/* Get the neighbouring coordinate sets of the tile at the given index and
+ * store them in `neighbours'. This output array should contain at least
+ * `maxneighbours' pointers to Coordinate sets, initially set to zero. */
 void neighbourhood(unsigned int idx, Coordinate **neighbours);
-void neighbourhood_(Dimension dim, Coordinate *basis, bool includebasis, Coordinate **neighbours);
+void neighbourhood_(Dimension dim, Coordinate *basis, bool includebasis,
+		Coordinate **neighbours);
+
+/* Various functions to initialise the global variables and create the game
+ * field. */
+void alloctiles();
 void resettiles();
 void calcmines();
 void setmines();
