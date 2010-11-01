@@ -2,21 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
-#define TRUE (1)
-#define FALSE (0)
-
-typedef unsigned int Coordinate;
-typedef unsigned int Dimension;
-typedef char bool;
-
-#define TILE_MINE 0x1
-#define TILE_PRESSED 0x2
-#define TILE_FLAGGED 0x4
-struct Tile {
-	int flags;
-	int neighbours;
-} Tile;
+#include "cmines.h"
 
 char tilechar(struct Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';
@@ -26,41 +12,6 @@ char tilechar(struct Tile *tile) {
 	if (tile->neighbours < 36) return 'A'+tile->neighbours-10;
 	return 'Z';
 }
-
-/* Field dimensions, most significant dimension first.
- * I.e. {..., height, width}. */
-Coordinate dimensions[] = {20, 40};
-
-/* Number of entries in `dimensions'. */
-Dimension dimcount = 2;
-
-/* Number of entries in `dimensions' that aren't equal to 1.
- * For mine calculation. */
-Dimension effectivedimcount = 2;
-
-/* Tiles. */
-struct Tile *tiles = 0;
-
-/* Number of entries in `tiles'. */
-unsigned int tilecount;
-unsigned int maxneighbours;
-
-unsigned int mines;
-unsigned int presseds;
-unsigned int flaggeds;
-
-unsigned int outputwidth;
-unsigned int outputheight;
-
-/* Coordinate sets. tilecount*dimcount Coordinates.
- * Accessed via idxtocoords and coordstoidx. */
-Coordinate *coordinatesets = 0;
-
-void alloctiles();
-Coordinate *idxtocoords(int idx);
-unsigned int coordstoidx(Coordinate *c);
-void calcmines();
-void neighbourhood_(Dimension dim, Coordinate *basis, bool includebasis, Coordinate **neighbours);
 
 int outputcolumn(Coordinate *tile) {
 	int factor = 1;
@@ -235,6 +186,15 @@ void printfield() {
 }
 
 int main(int argc, char *argv[]) {
+	dimensions = malloc(sizeof(Coordinate)*2);
+	dimensions[0] = 20;
+	dimensions[1] = 40;
+	dimcount = 2;
+	effectivedimcount = 2;
+
+	tiles = 0;
+	coordinatesets = 0;
+
 	srand(time(NULL) & 0xFFFFFFFF);
 	alloctiles();
 	resettiles();
