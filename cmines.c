@@ -185,12 +185,42 @@ void printfield() {
 	printf("%s", output);
 }
 
+bool isnumber(const char *c) {
+	if (*c == '\0') return 0;
+	char *end;
+	strtol(c, &end, 0);
+	return *end == '\0';
+}
+
 int main(int argc, char *argv[]) {
-	dimensions = malloc(sizeof(Coordinate)*2);
-	dimensions[0] = 20;
-	dimensions[1] = 40;
-	dimcount = 2;
-	effectivedimcount = 2;
+	dimcount = 0;
+	int i;
+	for (i = 1; i < argc; ++i) {
+		const char *arg = argv[i];
+		if (isnumber(arg)) {
+			int dim = strtol(arg, NULL, 0);
+			if (dim < 1) {
+				fprintf(stderr, "Invalid argument %d\n", dim);
+				exit(1);
+			} else if (dim > 1) {
+				++effectivedimcount;
+			}
+			++dimcount;
+		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
+			++i;
+		}
+	}
+	dimensions = malloc(sizeof(Coordinate)*dimcount);
+	Dimension d = dimcount;
+	for (i = 1; i < argc; ++i) {
+		const char *arg = argv[i];
+		if (isnumber(arg)) {
+			int dim = strtol(arg, NULL, 0);
+			dimensions[--d] = dim;
+		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
+			++i;
+		}
+	}
 
 	tiles = 0;
 	coordinatesets = 0;
