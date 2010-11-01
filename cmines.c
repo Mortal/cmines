@@ -6,6 +6,7 @@
 
 char tilechar(struct Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';
+	if (!(tile->flags & TILE_PRESSED)) return '.';
 	if (tile->flags & TILE_MINE) return '@';
 	if (tile->neighbours < 1) return ' ';
 	if (tile->neighbours < 10) return '0'+tile->neighbours;
@@ -97,9 +98,12 @@ unsigned int coordstoidx(Coordinate *c) {
 }
 
 void neighbourhood(unsigned int idx, Coordinate **neighbours) {
+	int i;
+	for (i = 0; i < maxneighbours; ++i) {
+		neighbours[i] = 0;
+	}
 	Coordinate *from = idxtocoords(idx);
 	Coordinate basis[dimcount];
-	int i;
 	for (i = 0; i < dimcount; ++i)
 		basis[i] = from[i];
 	neighbourhood_(0, basis, 0, neighbours);
@@ -150,13 +154,27 @@ void setmines() {
 		assert(idx < tilecount);
 		tiles[idx].flags |= TILE_MINE;
 		Coordinate *neighbours[maxneighbours];
-		for (j = 0; j < maxneighbours; ++j) {
-			neighbours[j] = 0;
-		}
 		neighbourhood(idx, (Coordinate **) neighbours);
 		for (j = 0; j < maxneighbours; ++j) {
 			if (!neighbours[j]) break;
 			++tiles[coordstoidx(neighbours[j])].neighbours;
+		}
+	}
+}
+
+void press(int idx) {
+	struct Tile *tile = &tiles[idx];
+	if (tile->flags & TILE_PRESSED) return;
+	assert(!(tile->flags & TILE_PRESSED));
+	if (tile->flags & TILE_FLAGGED) tile->flags &= ~TILE_FLAGGED;
+	tile->flags |= TILE_PRESSED;
+	assert(tile->flags & TILE_PRESSED);
+	if (!tile->neighbours) {
+		Coordinate *neighbours[maxneighbours];
+		neighbourhood(idx, (Coordinate **) neighbours);
+		int i;
+		for (i = 0; i < maxneighbours && neighbours[i]; ++i) {
+			press(coordstoidx(neighbours[i]));
 		}
 	}
 }
@@ -190,6 +208,35 @@ bool isnumber(const char *c) {
 	char *end;
 	strtol(c, &end, 0);
 	return *end == '\0';
+}
+
+void pressrandom(bool blanksonly) {
+	int i;
+	int eligible = 0;
+	for (i = 0; i < tilecount; ++i) {
+		if (!(tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !tiles[i].neighbours)) {
+			++eligible;
+		}
+	}
+	if (!eligible) return;
+	int idx = rand()%eligible;
+	for (i = 0; i < tilecount; ++i) {
+		if (!(tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !tiles[i].neighbours)) {
+			if (!idx--) {
+				press(i);
+				return;
+			}
+		}
+	}
+}
+
+void pressblanks() {
+	int i;
+	for (i = 0; i < tilecount; ++i) {
+		if (!(tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && !tiles[i].neighbours) {
+			press(i);
+		}
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -230,6 +277,7 @@ int main(int argc, char *argv[]) {
 	resettiles();
 	calcmines();
 	setmines();
+	pressrandom(1);
 	printfield();
 	return 0;
 }
