@@ -203,13 +203,6 @@ void printfield() {
 	printf("%s", output);
 }
 
-bool isnumber(const char *c) {
-	if (*c == '\0') return 0;
-	char *end;
-	strtol(c, &end, 0);
-	return *end == '\0';
-}
-
 void pressrandom(bool blanksonly) {
 	int i;
 	int eligible = 0;
@@ -237,6 +230,13 @@ void pressblanks() {
 			press(i);
 		}
 	}
+}
+
+bool isnumber(const char *c) {
+	if (*c == '\0') return 0;
+	char *end;
+	strtol(c, &end, 0);
+	return *end == '\0';
 }
 
 int main(int argc, char *argv[]) {
