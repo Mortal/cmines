@@ -18,61 +18,63 @@ struct Tile {
 
 char tilechar(struct Tile *tile);
 
-/* Field dimensions, most significant dimension first.
- * I.e. {..., height, width}. */
-static Coordinate *dimensions;
+struct Minefield {
+	/* Field dimensions, most significant dimension first.
+	 * I.e. {..., height, width}. */
+	Coordinate *dimensions;
 
-/* Number of entries in `dimensions'. */
-static Dimension dimcount;
+	/* Number of entries in `dimensions'. */
+	Dimension dimcount;
 
-/* Number of entries in `dimensions' that aren't equal to 1.
- * For mine calculation. */
-static Dimension effectivedimcount;
+	/* Number of entries in `dimensions' that aren't equal to 1.
+	 * For mine calculation. */
+	Dimension effectivedimcount;
 
-/* Tiles. */
-static struct Tile *tiles;
+	/* Tiles. */
+	struct Tile *tiles;
 
-/* Number of entries in `tiles'. */
-static unsigned int tilecount;
-static unsigned int maxneighbours;
+	/* Number of entries in `tiles'. */
+	unsigned int tilecount;
+	unsigned int maxneighbours;
 
-/* Some statistics. */
-static unsigned int mines;
-static unsigned int presseds;
-static unsigned int flaggeds;
+	/* Some statistics. */
+	unsigned int mines;
+	unsigned int presseds;
+	unsigned int flaggeds;
 
-static unsigned int outputwidth;
-static unsigned int outputheight;
+	unsigned int outputwidth;
+	unsigned int outputheight;
 
-/* Coordinate sets. Contains tilecount*dimcount Coordinates.
- * Accessed via idxtocoords and coordstoidx. */
-static Coordinate *coordinatesets;
+	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
+	 * Accessed via idxtocoords and coordstoidx. */
+	Coordinate *coordinatesets;
+};
 
 /* Get the column and row of the tile in the terminal/ncurses output. */
-int outputcolumn(Coordinate *tile);
-int outputrow(Coordinate *tile);
+int outputcolumn(struct Minefield *, Coordinate *tile);
+int outputrow(struct Minefield *, Coordinate *tile);
 
 /* Convert tile index to coordinates. Returns a pointer into the huge
  * `coordinatesets' array. */
-Coordinate *idxtocoords(int idx);
+Coordinate *idxtocoords(struct Minefield *, int idx);
 
 /* Convert coordinates to tile index. When passed a pointer into
  * `coordinatesets', calculates index by pointer arithmetic. */
-unsigned int coordstoidx(Coordinate *c);
+unsigned int coordstoidx(struct Minefield *, Coordinate *c);
 
 /* Get the neighbouring coordinate sets of the tile at the given index and
  * store them in `neighbours'. This output array should contain at least
  * `maxneighbours' pointers to Coordinate sets, initially set to zero. */
-void neighbourhood(unsigned int idx, Coordinate **neighbours);
-void neighbourhood_(Dimension dim, Coordinate *basis, bool includebasis,
+void neighbourhood(struct Minefield *, unsigned int idx, Coordinate **neighbours);
+void neighbourhood_(struct Minefield *, Dimension dim, Coordinate *basis, bool includebasis,
 		Coordinate **neighbours);
 
 /* Various functions to initialise the global variables and create the game
  * field. */
-void alloctiles();
-void resettiles();
-void calcmines();
-void setmines();
-void printfield();
+void alloctiles(struct Minefield *);
+void resettiles(struct Minefield *);
+void calcmines(struct Minefield *);
+void setmines(struct Minefield *);
+void printfield(struct Minefield *);
 
 #endif

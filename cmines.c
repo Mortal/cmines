@@ -16,220 +16,221 @@ char tilechar(struct Tile *tile) {
 	return 'Z';
 }
 
-int outputcolumn(Coordinate *tile) {
+int outputcolumn(struct Minefield *f, Coordinate *tile) {
 	int factor = 1;
 	int sum = 0;
-	Dimension d = dimcount-1;
+	Dimension d = f->dimcount-1;
 	while (1) {
 		sum += tile[d]*factor;
 		if (d < 2) break;
-		factor *= dimensions[d];
+		factor *= f->dimensions[d];
 		++factor;
 		d -= 2;
 	}
 	return sum;
 }
 
-int outputrow(Coordinate *tile) {
+int outputrow(struct Minefield *f, Coordinate *tile) {
 	int factor = 1;
 	int sum = 0;
-	Dimension d = dimcount-2;
+	Dimension d = f->dimcount-2;
 	while (1) {
 		sum += tile[d]*factor;
 		if (d < 2) break;
-		factor *= dimensions[d];
+		factor *= f->dimensions[d];
 		++factor;
 		d -= 2;
 	}
 	return sum;
 }
 
-void alloctiles() {
-	if (tiles != 0) {
-		free(tiles); tiles = 0;
+void alloctiles(struct Minefield *f) {
+	if (f->tiles != 0) {
+		free(f->tiles); f->tiles = 0;
 	}
-	if (coordinatesets != 0) {
-		free(coordinatesets); coordinatesets = 0;
+	if (f->coordinatesets != 0) {
+		free(f->coordinatesets); f->coordinatesets = 0;
 	}
 	int i;
-	tilecount = 1;
-	maxneighbours = 1;
-	for (i = 0; i < dimcount; ++i) {
-		tilecount *= dimensions[i];
-		maxneighbours *= 3;
+	f->tilecount = 1;
+	f->maxneighbours = 1;
+	for (i = 0; i < f->dimcount; ++i) {
+		f->tilecount *= f->dimensions[i];
+		f->maxneighbours *= 3;
 	}
-	tiles = (struct Tile *) malloc(tilecount*sizeof(struct Tile));
+	f->tiles = (struct Tile *) malloc(f->tilecount*sizeof(struct Tile));
 	struct Tile tile;
-	for (i = 0; i < tilecount; ++i) {
-		tiles[i] = tile;
+	for (i = 0; i < f->tilecount; ++i) {
+		f->tiles[i] = tile;
 	}
-	coordinatesets = (Coordinate *) malloc(tilecount*dimcount*sizeof(Coordinate));
-	for (i = 0; i < dimcount; ++i) {
-		coordinatesets[i] = 0;
+	f->coordinatesets = (Coordinate *) malloc(f->tilecount*f->dimcount*sizeof(Coordinate));
+	for (i = 0; i < f->dimcount; ++i) {
+		f->coordinatesets[i] = 0;
 	}
-	Coordinate *prev = idxtocoords(0);
-	for (i = 1; i < tilecount; ++i) {
-		Coordinate *cur = idxtocoords(i);
+	Coordinate *prev = idxtocoords(f, 0);
+	for (i = 1; i < f->tilecount; ++i) {
+		Coordinate *cur = idxtocoords(f, i);
 		int j, carry = 1;
-		for (j = dimcount; j--;) {
+		for (j = f->dimcount; j--;) {
 			cur[j] = prev[j]+carry;
-			carry = cur[j]/dimensions[j];
-			cur[j] %= dimensions[j];
+			carry = cur[j]/f->dimensions[j];
+			cur[j] %= f->dimensions[j];
 		}
 		prev = cur;
 	}
-	outputheight = outputrow(idxtocoords(tilecount-1))+1;
-	outputwidth = outputcolumn(idxtocoords(tilecount-1))+1;
+	f->outputheight = outputrow(f, idxtocoords(f, f->tilecount-1))+1;
+	f->outputwidth = outputcolumn(f, idxtocoords(f, f->tilecount-1))+1;
 }
 
-Coordinate *idxtocoords(int idx) {
-	return coordinatesets+idx*dimcount;
+Coordinate *idxtocoords(struct Minefield *f, int idx) {
+	return f->coordinatesets+idx*f->dimcount;
 }
 
-unsigned int coordstoidx(Coordinate *c) {
-	if (c >= coordinatesets && c < coordinatesets+dimcount*tilecount) {
-		return (c-coordinatesets)/dimcount;
+unsigned int coordstoidx(struct Minefield *f, Coordinate *c) {
+	if (c >= f->coordinatesets && c < f->coordinatesets+f->dimcount*f->tilecount) {
+		return (c-f->coordinatesets)/f->dimcount;
 	}
 	unsigned int idx = 0;
 	int i;
-	for (i = 0; i < dimcount; ++i) {
-		idx *= dimensions[i];
+	for (i = 0; i < f->dimcount; ++i) {
+		idx *= f->dimensions[i];
 		idx += c[i];
 	}
 	return idx;
 }
 
-void neighbourhood(unsigned int idx, Coordinate **neighbours) {
+void neighbourhood(struct Minefield *f, unsigned int idx, Coordinate **neighbours) {
 	int i;
-	for (i = 0; i < maxneighbours; ++i) {
+	for (i = 0; i < f->maxneighbours; ++i) {
 		neighbours[i] = 0;
 	}
-	Coordinate *from = idxtocoords(idx);
-	Coordinate basis[dimcount];
-	for (i = 0; i < dimcount; ++i)
+	Coordinate *from = idxtocoords(f, idx);
+	Coordinate basis[f->dimcount];
+	for (i = 0; i < f->dimcount; ++i)
 		basis[i] = from[i];
-	neighbourhood_(0, basis, 0, neighbours);
+	neighbourhood_(f, 0, basis, 0, neighbours);
 }
 
-void neighbourhood_(Dimension dim, Coordinate *basis, bool includebasis, Coordinate **neighbours) {
-	if (dim == dimcount) {
+void neighbourhood_(struct Minefield *f, Dimension dim, Coordinate *basis, bool includebasis, Coordinate **neighbours) {
+	if (dim == f->dimcount) {
 		if (includebasis) {
 			while (*neighbours) ++neighbours;
-			*neighbours = idxtocoords(coordstoidx(basis));
+			*neighbours = idxtocoords(f, coordstoidx(f, basis));
 		}
 	} else {
 		if (basis[dim]) {
 			--basis[dim];
-			neighbourhood_(dim+1, basis, TRUE, neighbours);
+			neighbourhood_(f, dim+1, basis, TRUE, neighbours);
 			++basis[dim];
 		}
-		neighbourhood_(dim+1, basis, includebasis, neighbours);
-		if (1+basis[dim] < dimensions[dim]) {
+		neighbourhood_(f, dim+1, basis, includebasis, neighbours);
+		if (1+basis[dim] < f->dimensions[dim]) {
 			++basis[dim];
-			neighbourhood_(dim+1, basis, TRUE, neighbours);
+			neighbourhood_(f, dim+1, basis, TRUE, neighbours);
 			--basis[dim];
 		}
 	}
 }
 
-void resettiles() {
+void resettiles(struct Minefield *f) {
 	int i;
-	for (i = 0; i < tilecount; ++i) {
-		tiles[i].flags = 0;
-		tiles[i].neighbours = 0;
+	for (i = 0; i < f->tilecount; ++i) {
+		f->tiles[i].flags = 0;
+		f->tiles[i].neighbours = 0;
 	}
-	presseds = 0;
-	flaggeds = 0;
+	f->presseds = 0;
+	f->flaggeds = 0;
 }
 
-void calcmines() {
-	mines = tilecount/(effectivedimcount*effectivedimcount*effectivedimcount);
+void calcmines(struct Minefield *f) {
+	f->mines = f->tilecount/(f->effectivedimcount*f->effectivedimcount*f->effectivedimcount);
 }
 
-void setmines() {
+void setmines(struct Minefield *f) {
 	int i;
-	for (i = 0; i < mines; ++i) {
-		int j, idx = rand()%(tilecount-i);
+	for (i = 0; i < f->mines; ++i) {
+		int j, idx = rand()%(f->tilecount-i);
 		for (j = 0; j <= idx; ++j) {
-			if (tiles[j].flags & TILE_MINE) ++idx;
+			if (f->tiles[j].flags & TILE_MINE) ++idx;
 		}
-		assert(idx < tilecount);
-		tiles[idx].flags |= TILE_MINE;
-		Coordinate *neighbours[maxneighbours];
-		neighbourhood(idx, (Coordinate **) neighbours);
-		for (j = 0; j < maxneighbours; ++j) {
+		assert(idx < f->tilecount);
+		f->tiles[idx].flags |= TILE_MINE;
+		Coordinate *neighbours[f->maxneighbours];
+		neighbourhood(f, idx, (Coordinate **) neighbours);
+		for (j = 0; j < f->maxneighbours; ++j) {
 			if (!neighbours[j]) break;
-			++tiles[coordstoidx(neighbours[j])].neighbours;
+			++f->tiles[coordstoidx(f, neighbours[j])].neighbours;
 		}
 	}
 }
 
-void press(int idx) {
-	struct Tile *tile = &tiles[idx];
+void press(struct Minefield *f, int idx) {
+	struct Tile *tile = &f->tiles[idx];
 	if (tile->flags & TILE_PRESSED) return;
 	assert(!(tile->flags & TILE_PRESSED));
 	if (tile->flags & TILE_FLAGGED) tile->flags &= ~TILE_FLAGGED;
 	tile->flags |= TILE_PRESSED;
 	assert(tile->flags & TILE_PRESSED);
 	if (!tile->neighbours) {
-		Coordinate *neighbours[maxneighbours];
-		neighbourhood(idx, (Coordinate **) neighbours);
+		Coordinate *neighbours[f->maxneighbours];
+		neighbourhood(f, idx, (Coordinate **) neighbours);
 		int i;
-		for (i = 0; i < maxneighbours && neighbours[i]; ++i) {
-			press(coordstoidx(neighbours[i]));
+		for (i = 0; i < f->maxneighbours && neighbours[i]; ++i) {
+			press(f, coordstoidx(f, neighbours[i]));
 		}
 	}
 }
 
-void printfield() {
-	char output[(outputwidth+1)*outputheight];
+void printfield(struct Minefield *f) {
+	int w = f->outputwidth, h = f->outputheight;
+	char output[(w+1)*h];
 	{
 		int row;
-		for (row = 0; row < outputheight; ++row) {
+		for (row = 0; row < h; ++row) {
 			int column;
-			for (column = 0; column < outputwidth; ++column) {
-				output[row*(outputwidth+1)+column] = ' ';
+			for (column = 0; column < w; ++column) {
+				output[row*(w+1)+column] = ' ';
 			}
-			output[row*(outputwidth+1)+column] = '\n';
+			output[row*(w+1)+column] = '\n';
 		}
 	}
 	{
 		int idx;
-		for (idx = 0; idx < tilecount; ++idx) {
-			int row = outputrow(idxtocoords(idx));
-			int column = outputcolumn(idxtocoords(idx));
-			output[row*(outputwidth+1)+column] = tilechar(tiles+idx);
+		for (idx = 0; idx < f->tilecount; ++idx) {
+			int row = outputrow(f, idxtocoords(f, idx));
+			int column = outputcolumn(f, idxtocoords(f, idx));
+			output[row*(w+1)+column] = tilechar(f->tiles+idx);
 		}
 	}
-	output[(outputwidth+1)*outputheight] = '\0';
+	output[(w+1)*h] = '\0';
 	printf("%s", output);
 }
 
-void pressrandom(bool blanksonly) {
+void pressrandom(struct Minefield *f, bool blanksonly) {
 	int i;
 	int eligible = 0;
-	for (i = 0; i < tilecount; ++i) {
-		if (!(tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !tiles[i].neighbours)) {
+	for (i = 0; i < f->tilecount; ++i) {
+		if (!(f->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !f->tiles[i].neighbours)) {
 			++eligible;
 		}
 	}
 	if (!eligible) return;
 	int idx = rand()%eligible;
-	for (i = 0; i < tilecount; ++i) {
-		if (!(tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !tiles[i].neighbours)) {
+	for (i = 0; i < f->tilecount; ++i) {
+		if (!(f->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !f->tiles[i].neighbours)) {
 			if (!idx--) {
-				press(i);
+				press(f, i);
 				return;
 			}
 		}
 	}
 }
 
-void pressblanks() {
+void pressblanks(struct Minefield *f) {
 	int i;
-	for (i = 0; i < tilecount; ++i) {
-		if (!(tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && !tiles[i].neighbours) {
-			press(i);
+	for (i = 0; i < f->tilecount; ++i) {
+		if (!(f->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && !f->tiles[i].neighbours) {
+			press(f, i);
 		}
 	}
 }
@@ -242,7 +243,8 @@ bool isnumber(const char *c) {
 }
 
 int main(int argc, char *argv[]) {
-	dimcount = 0;
+	struct Minefield f;
+	f.dimcount = 0;
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -252,42 +254,43 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Invalid argument %d\n", dim);
 				exit(1);
 			} else if (dim > 1) {
-				++effectivedimcount;
+				++f.effectivedimcount;
 			}
-			++dimcount;
+			++f.dimcount;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
 		}
 	}
-	dimensions = malloc(sizeof(Coordinate)*dimcount);
-	Dimension d = dimcount;
+	f.dimensions = malloc(sizeof(Coordinate)*f.dimcount);
+	Dimension d = f.dimcount;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
 		if (isnumber(arg)) {
 			int dim = strtol(arg, NULL, 0);
-			dimensions[--d] = dim;
+			f.dimensions[--d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
 		}
 	}
 
-	tiles = 0;
-	coordinatesets = 0;
+	f.tiles = 0;
+	f.coordinatesets = 0;
 
 	srand(time(NULL) & 0xFFFFFFFF);
-	alloctiles();
-	resettiles();
-	calcmines();
-	setmines();
-	pressrandom(1);
-	printfield();
+	alloctiles(&f);
+	resettiles(&f);
+	calcmines(&f);
+	setmines(&f);
+	pressrandom(&f, 1);
+	printfield(&f);
 	struct Player ply;
 	AI(&ply);
 	while (1) {
-		struct Action **act = (*ply.actfun)();
+		struct Action **act = (*ply.actfun)(&f);
 		bool giveup = 0;
-		while (*act != NULL) {
-			struct Action *a = *act;
+		int i = 0;
+		while (act[i] != NULL) {
+			struct Action *a = act[i++];
 			if (a->type == GIVEUP) {
 				printf("Giving up, aye\n");
 				giveup = 1;
@@ -295,10 +298,9 @@ int main(int argc, char *argv[]) {
 			}
 			int tileidx = a->tileidx;
 			if (a->type == PRESS) {
-				press(tileidx);
+				press(&f, tileidx);
 			}
-			printfield();
-			++act;
+			printfield(&f);
 		}
 		(*ply.freefun)(act);
 		if (giveup) break;

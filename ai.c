@@ -7,14 +7,14 @@ static void giveup(struct Action *act) {
 	act->type = GIVEUP;
 }
 
-static struct Action **act() {
+static struct Action **act(struct Minefield *f) {
 	struct Action **res = (struct Action **) malloc(sizeof(struct Action *)*2);
 	int i;
 	res[0] = (struct Action *) malloc(sizeof(struct Action));
 	giveup(res[0]);
 	res[1] = NULL;
-	for (i = 0; i < tilecount; ++i) {
-		struct Tile *tile = &tiles[i];
+	for (i = 0; i < f->tilecount; ++i) {
+		struct Tile *tile = &f->tiles[i];
 		if (!(tile->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			struct Action act;
 			act.type = PRESS;
@@ -27,11 +27,11 @@ static struct Action **act() {
 }
 
 static void actfree(struct Action **act) {
-	struct Action **act_ = act;
-	while (*act != NULL) {
-		free(*act++);
+	int i = 0;
+	while (act[i] != NULL) {
+		free(act[i++]);
 	}
-	free(act_);
+	free(act);
 }
 
 void AI(struct Player *ply) {

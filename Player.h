@@ -13,7 +13,7 @@ struct Action {
 	int tileidx;
 };
 
-typedef struct Action **(*plyactfun)();
+typedef struct Action **(*plyactfun)(struct Minefield *);
 typedef void (*plyfreefun)(struct Action **);
 
 struct Player {
