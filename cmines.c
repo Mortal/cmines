@@ -164,6 +164,12 @@ void setmines(struct Minefield *f) {
 	}
 }
 
+void checkstate(struct Minefield *f) {
+	if (f->mines+f->presseds >= f->tilecount) {
+		f->state = STATE_WON;
+	}
+}
+
 void press(struct Minefield *f, int idx) {
 	struct Tile *tile = &f->tiles[idx];
 	if (tile->flags & TILE_PRESSED) return;
@@ -171,6 +177,15 @@ void press(struct Minefield *f, int idx) {
 	if (tile->flags & TILE_FLAGGED) tile->flags &= ~TILE_FLAGGED;
 	tile->flags |= TILE_PRESSED;
 	assert(tile->flags & TILE_PRESSED);
+	if (tile->flags & TILE_MINE) {
+		if (f->state == STATE_INIT) {
+			printf("Pressed a mine during init!\n");
+		}
+		f->state = STATE_LOST;
+		return;
+	}
+	++f->presseds;
+	checkstate(f);
 	if (!tile->neighbours) {
 		Coordinate *neighbours[f->maxneighbours];
 		neighbourhood(f, idx, (Coordinate **) neighbours);
@@ -283,16 +298,16 @@ int main(int argc, char *argv[]) {
 	setmines(&f);
 	pressrandom(&f, 1);
 	printfield(&f);
+	f.state = STATE_PLAY;
 	struct Player ply;
 	AI(&ply);
-	while (1) {
+	while (f.state == STATE_PLAY) {
 		struct Action **act = (*ply.actfun)(&f);
 		bool giveup = 0;
 		int i = 0;
 		while (act[i] != NULL) {
 			struct Action *a = act[i++];
 			if (a->type == GIVEUP) {
-				printf("Giving up, aye\n");
 				giveup = 1;
 				break;
 			}
@@ -304,6 +319,13 @@ int main(int argc, char *argv[]) {
 		}
 		(*ply.freefun)(act);
 		if (giveup) break;
+	}
+	if (f.state == STATE_PLAY) {
+		printf("You give up? Too bad!\n");
+	} else if (f.state == STATE_LOST) {
+		printf("Too bad!\n");
+	} else if (f.state == STATE_WON) {
+		printf("Congratulations!\n");
 	}
 	return 0;
 }

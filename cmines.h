@@ -18,10 +18,19 @@ struct Tile {
 
 char tilechar(struct Tile *tile);
 
+enum FieldState {
+	STATE_INIT,
+	STATE_PLAY,
+	STATE_WON,
+	STATE_LOST
+};
+
 struct Minefield {
 	/* Field dimensions, most significant dimension first.
 	 * I.e. {..., height, width}. */
 	Coordinate *dimensions;
+
+	enum FieldState state;
 
 	/* Number of entries in `dimensions'. */
 	Dimension dimcount;
