@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 #include "cmines.h"
+#include "ai.h"
 
 char tilechar(struct Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';
@@ -279,5 +281,27 @@ int main(int argc, char *argv[]) {
 	setmines();
 	pressrandom(1);
 	printfield();
+	struct Player ply;
+	AI(&ply);
+	while (1) {
+		struct Action **act = (*ply.actfun)();
+		bool giveup = 0;
+		while (*act != NULL) {
+			struct Action *a = *act;
+			if (a->type == GIVEUP) {
+				printf("Giving up, aye\n");
+				giveup = 1;
+				break;
+			}
+			int tileidx = a->tileidx;
+			if (a->type == PRESS) {
+				press(tileidx);
+			}
+			printfield();
+			++act;
+		}
+		(*ply.freefun)(act);
+		if (giveup) break;
+	}
 	return 0;
 }

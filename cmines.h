@@ -1,3 +1,6 @@
+#ifndef CMINES_H
+#define CMINES_H
+
 #define TRUE (1)
 #define FALSE (0)
 
@@ -71,3 +74,5 @@ void resettiles();
 void calcmines();
 void setmines();
 void printfield();
+
+#endif

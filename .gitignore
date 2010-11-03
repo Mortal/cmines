@@ -1,0 +1,4 @@
+*.gch
+ai.o
+cmines
+cmines.o
