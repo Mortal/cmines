@@ -196,6 +196,13 @@ void press(struct Minefield *f, int idx) {
 	}
 }
 
+void flag(struct Minefield *f, int idx) {
+	struct Tile *tile = &f->tiles[idx];
+	if (tile->flags & TILE_FLAGGED) return;
+	++f->flaggeds;
+	tile->flags |= TILE_FLAGGED;
+}
+
 void printfield(struct Minefield *f) {
 	int w = f->outputwidth, h = f->outputheight;
 	char output[(w+1)*h];
@@ -314,6 +321,8 @@ int main(int argc, char *argv[]) {
 			int tileidx = a->tileidx;
 			if (a->type == PRESS) {
 				press(&f, tileidx);
+			} else if (a->type == FLAG) {
+				flag(&f, tileidx);
 			}
 			printfield(&f);
 		}
