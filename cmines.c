@@ -221,8 +221,7 @@ bool simplepress(Minefield *f, int idx) {
 
 void ripplepress(Minefield *f, PressRipple *r) {
 	int idx = ripple_pop(r);
-	simplepress(f, idx);
-	if (!r) return;
+	if (!simplepress(f, idx)) return;
 	Tile *tile = &f->tiles[idx];
 	if (tile->neighbours || r->overflow) return;
 	Coordinate *neighbours[f->maxneighbours];

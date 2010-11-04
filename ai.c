@@ -45,7 +45,7 @@ static void neighbourfilter(Minefield *f, Coordinate **c, neighbourcount_cb cb, 
 		Tile *tile = &f->tiles[coordstoidx(f, coord)];
 		if ((*cb)(f, tile, coord, cbpayload)) {
 			if (&c[i] != dest) {
-				c[i] = *dest;
+				*dest = c[i];
 			}
 			++dest;
 		}
