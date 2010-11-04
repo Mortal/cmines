@@ -83,6 +83,7 @@ void alloctiles(Minefield *f) {
 }
 
 Coordinate *idxtocoords(Minefield *f, int idx) {
+	assert(idx >= 0 && idx <= f->tilecount);
 	return f->coordinatesets+idx*f->dimcount;
 }
 
@@ -111,29 +112,27 @@ void neighbourhood(Minefield *f, unsigned int idx, Coordinate **neighbours) {
 	Dimension dim;
 	for (dim = 0; dim < f->dimcount; ++dim) {
 		int tile = idx;
-		int *nexttile = res->neighbours;
-		int *lasttile = &res->neighbours[res->idx];
-		while (1) {
-			Coordinate *basis = idxtocoords(f, tile);
+		int i;
+		int l = res->idx;
+		for (i = 0; tile == idx || i < l; tile = res->neighbours[(tile == idx) ? i : ++i]) {
+			Coordinate *basis = (tile == idx) ? idxtocoords(f, tile) : neighbours[i];
 			if (basis[dim]) {
-				res->neighbours[res->idx++] = tile-f->dimensionproducts[dim];
+				int i2 = tile-f->dimensionproducts[dim];
+				res->neighbours[res->idx] = i2;
+				neighbours[res->idx] = idxtocoords(f, i2);
+				res->idx++;
 			}
 			if (1+basis[dim] < f->dimensions[dim]) {
-				res->neighbours[res->idx++] = tile+f->dimensionproducts[dim];
+				int i2 = tile+f->dimensionproducts[dim];
+				res->neighbours[res->idx] = i2;
+				neighbours[res->idx] = idxtocoords(f, i2);
+				res->idx++;
 			}
-			int *n = nexttile;
-			nexttile++;
-			if (nexttile > lasttile) break;
-			tile = *n;
 		}
 	}
-	int i;
-	for (i = 0; i < res->idx; ++i) {
-		neighbours[i] = idxtocoords(f, res->neighbours[i]);
-	}
+	neighbours[res->idx] = NULL;
 	free(res->neighbours);
 	free(res);
-	neighbours[i] = NULL;
 }
 
 void resettiles(Minefield *f) {

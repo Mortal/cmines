@@ -202,7 +202,7 @@ ACT(act_dualcheck) {
 			neighbourhood(f, bidx, (Coordinate **) bn);
 
 			Coordinate *bnu[f->maxneighbours];
-			{ Coordinate **a = bn; Coordinate **b = bnu; while ((*a++ = *b++)); }
+			{ Coordinate **a = bn; Coordinate **b = bnu; while ((*b++ = *a++)); }
 			neighbourfilter(f, bnu, &neighbourunpressed_cb, NULL);
 
 			if (!issubset((void **) bnu, (void **) anu)) continue;
@@ -216,7 +216,7 @@ ACT(act_dualcheck) {
 
 			if (!unflagged) continue;
 
-			int count = 0; while (bnu[count] != NULL); ++count;
+			int count = 0; while (bnu[count] != NULL) ++count;
 			if (b->neighbours-a->neighbours > count) continue;
 			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
 			Action act;
