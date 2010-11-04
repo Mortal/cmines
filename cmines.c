@@ -59,6 +59,10 @@ void alloctiles(Minefield *f) {
 		f->maxneighbours *= 3;
 	}
 	f->tiles = (Tile *) malloc(f->tilecount*sizeof(Tile));
+	if (f->tiles == NULL) {
+		printf("Not enough memory to allocate %d tiles!\n", f->tilecount);
+		exit(2);
+	}
 	Tile tile;
 	for (i = 0; i < f->tilecount; ++i) {
 		f->tiles[i] = tile;
