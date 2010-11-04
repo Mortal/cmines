@@ -170,7 +170,29 @@ void checkstate(Minefield *f) {
 	}
 }
 
-void press(Minefield *f, int idx) {
+typedef struct {
+	int *tilestart;
+	int length;
+	int first;
+	int last;
+} PressRipple;
+
+void ripple_push(PressRipple *r, int idx) {
+	if ((r->last+1) % r->length == r->first) return;
+	r->tilestart[r->last] = idx;
+	//printf("Push %d=%d\n", r->last, idx);
+	r->last = (r->last+1)%r->length;
+}
+
+int ripple_pop(PressRipple *r) {
+	int val = r->tilestart[r->first];
+	//printf("Pop %d=%d\n", r->first, val);
+	r->first = (r->first+1)%r->length;
+	return val;
+}
+
+void simplepress(Minefield *f, PressRipple *r) {
+	int idx = ripple_pop(r);
 	Tile *tile = &f->tiles[idx];
 	if (tile->flags & TILE_PRESSED) return;
 	assert(!(tile->flags & TILE_PRESSED));
@@ -191,8 +213,21 @@ void press(Minefield *f, int idx) {
 		neighbourhood(f, idx, (Coordinate **) neighbours);
 		int i;
 		for (i = 0; i < f->maxneighbours && neighbours[i]; ++i) {
-			press(f, coordstoidx(f, neighbours[i]));
+			ripple_push(r, coordstoidx(f, neighbours[i]));
 		}
+	}
+}
+
+void press(Minefield *f, int idx) {
+	PressRipple r;
+	int length = 1024;
+	int positions[length];
+	r.length = length;
+	r.tilestart = positions;
+	r.first = r.last = 0;
+	ripple_push(&r, idx);
+	while (r.first != r.last) {
+		simplepress(f, &r);
 	}
 }
 
@@ -308,6 +343,7 @@ int main(int argc, char *argv[]) {
 	f.state = STATE_PLAY;
 	Player ply;
 	AI(&ply);
+	time_t lastprint = 0;
 	while (f.state == STATE_PLAY) {
 		Action **act = (*ply.actfun)(&f);
 		bool giveup = 0;
@@ -324,6 +360,10 @@ int main(int argc, char *argv[]) {
 			} else if (a->type == FLAG) {
 				flag(&f, tileidx);
 			}
+		}
+		time_t now = time(NULL);
+		if (giveup || f.state != STATE_PLAY || now != lastprint) {
+			lastprint = now;
 			printfield(&f);
 		}
 		(*ply.freefun)(act);
