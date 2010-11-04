@@ -104,28 +104,29 @@ typedef struct {
 	int idx;
 } NeighbourList;
 
-static void neighbourhood_(Minefield *f, Dimension dim, int idx, bool includebasis, NeighbourList *list) {
-	if (dim == f->dimcount) {
-		if (includebasis) {
-			list->neighbours[list->idx++] = idx;
-		}
-	} else {
-		Coordinate *basis = idxtocoords(f, idx);
-		if (basis[dim]) {
-			neighbourhood_(f, dim+1, idx-f->dimensionproducts[dim], 1, list);
-		}
-		neighbourhood_(f, dim+1, idx, includebasis, list);
-		if (1+basis[dim] < f->dimensions[dim]) {
-			neighbourhood_(f, dim+1, idx+f->dimensionproducts[dim], 1, list);
-		}
-	}
-}
-
 void neighbourhood(Minefield *f, unsigned int idx, Coordinate **neighbours) {
 	NeighbourList *res = (NeighbourList *) malloc(sizeof(NeighbourList));
 	res->neighbours = (int *) malloc(sizeof(int)*(f->maxneighbours+1));
 	res->idx = 0;
-	neighbourhood_(f, 0, idx, 0, res);
+	Dimension dim;
+	for (dim = 0; dim < f->dimcount; ++dim) {
+		int tile = idx;
+		int *nexttile = res->neighbours;
+		int *lasttile = &res->neighbours[res->idx];
+		while (1) {
+			Coordinate *basis = idxtocoords(f, tile);
+			if (basis[dim]) {
+				res->neighbours[res->idx++] = tile-f->dimensionproducts[dim];
+			}
+			if (1+basis[dim] < f->dimensions[dim]) {
+				res->neighbours[res->idx++] = tile+f->dimensionproducts[dim];
+			}
+			int *n = nexttile;
+			nexttile++;
+			if (nexttile > lasttile) break;
+			tile = *n;
+		}
+	}
 	int i;
 	for (i = 0; i < res->idx; ++i) {
 		neighbours[i] = idxtocoords(f, res->neighbours[i]);
