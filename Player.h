@@ -8,17 +8,17 @@ enum ActionType {
 	GIVEUP
 };
 
-struct Action {
+typedef struct {
 	enum ActionType type;
 	int tileidx;
-};
+} Action;
 
-typedef struct Action **(*plyactfun)(struct Minefield *);
-typedef void (*plyfreefun)(struct Action **);
+typedef Action **(*plyactfun)(Minefield *);
+typedef void (*plyfreefun)(Action **);
 
-struct Player {
+typedef struct {
 	plyactfun actfun;
 	plyfreefun freefun;
-};
+} Player;
 
 #endif

@@ -11,12 +11,12 @@ typedef char bool;
 #define TILE_MINE 0x1
 #define TILE_PRESSED 0x2
 #define TILE_FLAGGED 0x4
-struct Tile {
+typedef struct {
 	int flags;
 	int neighbours;
 } Tile;
 
-char tilechar(struct Tile *tile);
+char tilechar(Tile *tile);
 
 enum FieldState {
 	STATE_INIT,
@@ -25,7 +25,7 @@ enum FieldState {
 	STATE_LOST
 };
 
-struct Minefield {
+typedef struct {
 	/* Field dimensions, most significant dimension first.
 	 * I.e. {..., height, width}. */
 	Coordinate *dimensions;
@@ -40,7 +40,7 @@ struct Minefield {
 	Dimension effectivedimcount;
 
 	/* Tiles. */
-	struct Tile *tiles;
+	Tile *tiles;
 
 	/* Number of entries in `tiles'. */
 	unsigned int tilecount;
@@ -57,33 +57,33 @@ struct Minefield {
 	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
 	 * Accessed via idxtocoords and coordstoidx. */
 	Coordinate *coordinatesets;
-};
+} Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */
-int outputcolumn(struct Minefield *, Coordinate *tile);
-int outputrow(struct Minefield *, Coordinate *tile);
+int outputcolumn(Minefield *, Coordinate *tile);
+int outputrow(Minefield *, Coordinate *tile);
 
 /* Convert tile index to coordinates. Returns a pointer into the huge
  * `coordinatesets' array. */
-Coordinate *idxtocoords(struct Minefield *, int idx);
+Coordinate *idxtocoords(Minefield *, int idx);
 
 /* Convert coordinates to tile index. When passed a pointer into
  * `coordinatesets', calculates index by pointer arithmetic. */
-unsigned int coordstoidx(struct Minefield *, Coordinate *c);
+unsigned int coordstoidx(Minefield *, Coordinate *c);
 
 /* Get the neighbouring coordinate sets of the tile at the given index and
  * store them in `neighbours'. This output array should contain at least
  * `maxneighbours' pointers to Coordinate sets, initially set to zero. */
-void neighbourhood(struct Minefield *, unsigned int idx, Coordinate **neighbours);
-void neighbourhood_(struct Minefield *, Dimension dim, Coordinate *basis, bool includebasis,
+void neighbourhood(Minefield *, unsigned int idx, Coordinate **neighbours);
+void neighbourhood_(Minefield *, Dimension dim, Coordinate *basis, bool includebasis,
 		Coordinate **neighbours);
 
 /* Various functions to initialise the global variables and create the game
  * field. */
-void alloctiles(struct Minefield *);
-void resettiles(struct Minefield *);
-void calcmines(struct Minefield *);
-void setmines(struct Minefield *);
-void printfield(struct Minefield *);
+void alloctiles(Minefield *);
+void resettiles(Minefield *);
+void calcmines(Minefield *);
+void setmines(Minefield *);
+void printfield(Minefield *);
 
 #endif

@@ -3,6 +3,6 @@
 #include "cmines.h"
 #include "Player.h"
 
-void AI(struct Player *ply);
+void AI(Player *ply);
 
 #endif
