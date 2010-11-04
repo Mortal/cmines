@@ -352,8 +352,9 @@ int main(int argc, char *argv[]) {
 			f.dimensions[--d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
-			if (isnumber(arg)) {
-				int mines = strtol(arg, NULL, 0);
+			const char *arg2 = argv[i];
+			if (isnumber(arg2)) {
+				int mines = strtol(arg2, NULL, 0);
 				if (mines < 1) {
 					fprintf(stderr, "Invalid argument %d\n", mines);
 					exit(1);
