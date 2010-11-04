@@ -30,6 +30,10 @@ typedef struct {
 	 * I.e. {..., height, width}. */
 	Coordinate *dimensions;
 
+	/* Entry i is equal to the product of dimensions
+	 * i, i+1, ..., dimensioncount-1 */
+	Coordinate *dimensionproducts;
+
 	enum FieldState state;
 
 	/* Number of entries in `dimensions'. */
@@ -78,8 +82,6 @@ unsigned int coordstoidx(Minefield *, Coordinate *c);
  * store them in `neighbours'. This output array should contain at least
  * `maxneighbours' pointers to Coordinate sets, initially set to zero. */
 void neighbourhood(Minefield *, unsigned int idx, Coordinate **neighbours);
-void neighbourhood_(Minefield *, Dimension dim, Coordinate *basis, bool includebasis,
-		Coordinate **neighbours);
 
 /* Various functions to initialise the global variables and create the game
  * field. */

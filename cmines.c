@@ -99,37 +99,40 @@ unsigned int coordstoidx(Minefield *f, Coordinate *c) {
 	return idx;
 }
 
-void neighbourhood(Minefield *f, unsigned int idx, Coordinate **neighbours) {
-	int i;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		neighbours[i] = 0;
-	}
-	Coordinate *from = idxtocoords(f, idx);
-	Coordinate basis[f->dimcount];
-	for (i = 0; i < f->dimcount; ++i)
-		basis[i] = from[i];
-	neighbourhood_(f, 0, basis, 0, neighbours);
-}
+typedef struct {
+	int *neighbours;
+	int idx;
+} NeighbourList;
 
-void neighbourhood_(Minefield *f, Dimension dim, Coordinate *basis, bool includebasis, Coordinate **neighbours) {
+static void neighbourhood_(Minefield *f, Dimension dim, int idx, bool includebasis, NeighbourList *list) {
 	if (dim == f->dimcount) {
 		if (includebasis) {
-			while (*neighbours) ++neighbours;
-			*neighbours = idxtocoords(f, coordstoidx(f, basis));
+			list->neighbours[list->idx++] = idx;
 		}
 	} else {
+		Coordinate *basis = idxtocoords(f, idx);
 		if (basis[dim]) {
-			--basis[dim];
-			neighbourhood_(f, dim+1, basis, TRUE, neighbours);
-			++basis[dim];
+			neighbourhood_(f, dim+1, idx-f->dimensionproducts[dim], 1, list);
 		}
-		neighbourhood_(f, dim+1, basis, includebasis, neighbours);
+		neighbourhood_(f, dim+1, idx, includebasis, list);
 		if (1+basis[dim] < f->dimensions[dim]) {
-			++basis[dim];
-			neighbourhood_(f, dim+1, basis, TRUE, neighbours);
-			--basis[dim];
+			neighbourhood_(f, dim+1, idx+f->dimensionproducts[dim], 1, list);
 		}
 	}
+}
+
+void neighbourhood(Minefield *f, unsigned int idx, Coordinate **neighbours) {
+	NeighbourList *res = (NeighbourList *) malloc(sizeof(NeighbourList));
+	res->neighbours = (int *) malloc(sizeof(int)*(f->maxneighbours+1));
+	res->idx = 0;
+	neighbourhood_(f, 0, idx, 0, res);
+	int i;
+	for (i = 0; i < res->idx; ++i) {
+		neighbours[i] = idxtocoords(f, res->neighbours[i]);
+	}
+	free(res->neighbours);
+	free(res);
+	neighbours[i] = NULL;
 }
 
 void resettiles(Minefield *f) {
@@ -344,12 +347,20 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	f.dimensions = malloc(sizeof(Coordinate)*f.dimcount);
+	f.dimensionproducts = malloc(sizeof(Coordinate)*f.dimcount);
 	Dimension d = f.dimcount;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
 		if (isnumber(arg)) {
 			int dim = strtol(arg, NULL, 0);
-			f.dimensions[--d] = dim;
+			int j;
+			--d;
+			if (i == 1) {
+				for (j = 0; j < d; ++j) f.dimensionproducts[j] = dim;
+				f.dimensionproducts[d] = 1;
+			}
+			else for (j = 0; j < d; ++j) f.dimensionproducts[j] *= dim;
+			f.dimensions[d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
 			const char *arg2 = argv[i];
