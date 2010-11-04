@@ -41,7 +41,7 @@ static void neighbourfilter(Minefield *f, Coordinate **c, neighbourcount_cb cb, 
 	Coordinate **dest = c;
 	int i = 0;
 	while (c[i] != NULL) {
-		Coordinate *coord = c[i++];
+		Coordinate *coord = c[i];
 		Tile *tile = &f->tiles[coordstoidx(f, coord)];
 		if ((*cb)(f, tile, coord, cbpayload)) {
 			if (&c[i] != dest) {
@@ -49,6 +49,7 @@ static void neighbourfilter(Minefield *f, Coordinate **c, neighbourcount_cb cb, 
 			}
 			++dest;
 		}
+		i++;
 	}
 	*dest = NULL;
 }
@@ -186,8 +187,8 @@ ACT(act_dualcheck) {
 	Coordinate *an[f->maxneighbours];
 	neighbourhood(f, idx, (Coordinate **) an);
 	Coordinate *anu[f->maxneighbours];
-	{ Coordinate **a = an; Coordinate **b = anu; while ((*a++ = *b++)); }
-	neighbourfilter(f, anu, *neighbourunpressed_cb, NULL);
+	{ Coordinate **a = an; Coordinate **b = anu; while ((*b++ = *a++)); }
+	neighbourfilter(f, anu, &neighbourunpressed_cb, NULL);
 	{
 		int i = 0;
 		while (an[i] != NULL) {
@@ -241,9 +242,13 @@ static Action **act(Minefield *f) {
 #define ACT(method) {Action **ret = method(f, idx); if (ret != NULL) {allowcoordreset = 1; return ret;}}
 	while (hasnexttile(f)) {
 		int idx = nexttileidx(f);
-		//ACT(act_dumb);
 		ACT(act_singleflagging);
 		ACT(act_safespots);
+	}
+	allowcoordreset = 1;
+	while (hasnexttile(f)) {
+		int idx = nexttileidx(f);
+		ACT(act_dualcheck);
 	}
 	Action **res = (Action **) malloc(sizeof(Action *)*2);
 	res[0] = (Action *) malloc(sizeof(Action));

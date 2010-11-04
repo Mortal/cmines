@@ -175,10 +175,11 @@ typedef struct {
 	int length;
 	int first;
 	int last;
+	bool overflow;
 } PressRipple;
 
 void ripple_push(PressRipple *r, int idx) {
-	if ((r->last+1) % r->length == r->first) return;
+	if ((r->last+1) % r->length == r->first) {r->overflow = 1; return;}
 	r->tilestart[r->last] = idx;
 	//printf("Push %d=%d\n", r->last, idx);
 	r->last = (r->last+1)%r->length;
@@ -191,10 +192,9 @@ int ripple_pop(PressRipple *r) {
 	return val;
 }
 
-void simplepress(Minefield *f, PressRipple *r) {
-	int idx = ripple_pop(r);
+bool simplepress(Minefield *f, int idx) {
 	Tile *tile = &f->tiles[idx];
-	if (tile->flags & TILE_PRESSED) return;
+	if (tile->flags & TILE_PRESSED) return 0;
 	assert(!(tile->flags & TILE_PRESSED));
 	if (tile->flags & TILE_FLAGGED) tile->flags &= ~TILE_FLAGGED;
 	tile->flags |= TILE_PRESSED;
@@ -204,16 +204,38 @@ void simplepress(Minefield *f, PressRipple *r) {
 			printf("Pressed a mine during init!\n");
 		}
 		f->state = STATE_LOST;
-		return;
+		return 1;
 	}
 	++f->presseds;
 	checkstate(f);
-	if (!tile->neighbours) {
+	return 1;
+}
+
+void ripplepress(Minefield *f, PressRipple *r) {
+	int idx = ripple_pop(r);
+	simplepress(f, idx);
+	if (!r) return;
+	Tile *tile = &f->tiles[idx];
+	if (tile->neighbours || r->overflow) return;
+	Coordinate *neighbours[f->maxneighbours];
+	neighbourhood(f, idx, (Coordinate **) neighbours);
+	int i;
+	for (i = 0; !r->overflow && i < f->maxneighbours && neighbours[i]; ++i) {
+		ripple_push(r, coordstoidx(f, neighbours[i]));
+	}
+}
+
+static void handlepressoverflow(Minefield *f) {
+	bool allowreset = 0;
+	int idx;
+	for (idx = 0; idx < f->tilecount || (allowreset && !(idx = 0) && !(allowreset = 0)); ++idx) {
+		Tile *t = &f->tiles[idx];
+		if (!(t->flags & TILE_PRESSED) || t->flags & TILE_FLAGGED || t->neighbours) continue;
 		Coordinate *neighbours[f->maxneighbours];
 		neighbourhood(f, idx, (Coordinate **) neighbours);
 		int i;
-		for (i = 0; i < f->maxneighbours && neighbours[i]; ++i) {
-			ripple_push(r, coordstoidx(f, neighbours[i]));
+		for (i = 0; i < f->maxneighbours && neighbours[i] != NULL; ++i) {
+			if (simplepress(f, coordstoidx(f, neighbours[i]))) allowreset = 1;
 		}
 	}
 }
@@ -227,8 +249,9 @@ void press(Minefield *f, int idx) {
 	r.first = r.last = 0;
 	ripple_push(&r, idx);
 	while (r.first != r.last) {
-		simplepress(f, &r);
+		ripplepress(f, &r);
 	}
+	if (r.overflow) handlepressoverflow(f);
 }
 
 void flag(Minefield *f, int idx) {
