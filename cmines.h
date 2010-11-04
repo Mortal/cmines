@@ -72,16 +72,16 @@ int outputrow(Minefield *, Coordinate *tile);
 
 /* Convert tile index to coordinates. Returns a pointer into the huge
  * `coordinatesets' array. */
-Coordinate *idxtocoords(Minefield *, int idx);
+Coordinate *idxtocoords(Minefield *, int idx) __attribute__((always_inline));
 
 /* Convert coordinates to tile index. When passed a pointer into
  * `coordinatesets', calculates index by pointer arithmetic. */
 unsigned int coordstoidx(Minefield *, Coordinate *c);
 
-/* Get the neighbouring coordinate sets of the tile at the given index and
- * store them in `neighbours'. This output array should contain at least
- * `maxneighbours' pointers to Coordinate sets, initially set to zero. */
-void neighbourhood(Minefield *, unsigned int idx, Coordinate **neighbours);
+/* Get the neighbouring indices of the tile at the given index and store them
+ * in `neighbours'. This output array should contain at least `maxneighbours'
+ * pointers to Coordinate sets, initially set to zero. */
+void neighbourhood(Minefield *, unsigned int idx, int *neighbours);
 
 /* Various functions to initialise the global variables and create the game
  * field. */

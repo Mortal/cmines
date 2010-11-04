@@ -104,39 +104,28 @@ unsigned int coordstoidx(Minefield *f, Coordinate *c) {
 	return idx;
 }
 
-typedef struct {
-	int *neighbours;
-	int idx;
-} NeighbourList;
-
-void neighbourhood(Minefield *f, unsigned int idx, Coordinate **neighbours) {
-	NeighbourList *res = (NeighbourList *) malloc(sizeof(NeighbourList));
-	res->neighbours = (int *) malloc(sizeof(int)*(f->maxneighbours+1));
-	res->idx = 0;
+void neighbourhood(Minefield *f, unsigned int root, int *neighbours) {
+	int idx = 0;
 	Dimension dim;
 	for (dim = 0; dim < f->dimcount; ++dim) {
-		int tile = idx;
+		int tile = root;
 		int i;
-		int l = res->idx;
-		for (i = 0; tile == idx || i < l; tile = res->neighbours[(tile == idx) ? i : ++i]) {
-			Coordinate *basis = (tile == idx) ? idxtocoords(f, tile) : neighbours[i];
+		int l = idx;
+		for (i = 0; tile == root || i < l; tile = neighbours[(tile == root) ? i : ++i]) {
+			Coordinate *basis = idxtocoords(f, tile);
 			if (basis[dim]) {
 				int i2 = tile-f->dimensionproducts[dim];
-				res->neighbours[res->idx] = i2;
-				neighbours[res->idx] = idxtocoords(f, i2);
-				res->idx++;
+				neighbours[idx] = i2;
+				idx++;
 			}
 			if (1+basis[dim] < f->dimensions[dim]) {
 				int i2 = tile+f->dimensionproducts[dim];
-				res->neighbours[res->idx] = i2;
-				neighbours[res->idx] = idxtocoords(f, i2);
-				res->idx++;
+				neighbours[idx] = i2;
+				idx++;
 			}
 		}
 	}
-	neighbours[res->idx] = NULL;
-	free(res->neighbours);
-	free(res);
+	neighbours[idx] = -1;
 }
 
 void resettiles(Minefield *f) {
@@ -163,11 +152,11 @@ void setmines(Minefield *f) {
 		}
 		assert(idx < f->tilecount);
 		f->tiles[idx].flags |= TILE_MINE;
-		Coordinate *neighbours[f->maxneighbours];
-		neighbourhood(f, idx, (Coordinate **) neighbours);
+		int neighbours[f->maxneighbours];
+		neighbourhood(f, idx, (int *) neighbours);
 		for (j = 0; j < f->maxneighbours; ++j) {
-			if (!neighbours[j]) break;
-			++f->tiles[coordstoidx(f, neighbours[j])].neighbours;
+			if (-1 == neighbours[j]) break;
+			++f->tiles[neighbours[j]].neighbours;
 		}
 	}
 }
@@ -224,11 +213,11 @@ void ripplepress(Minefield *f, PressRipple *r) {
 	if (!simplepress(f, idx)) return;
 	Tile *tile = &f->tiles[idx];
 	if (tile->neighbours || r->overflow) return;
-	Coordinate *neighbours[f->maxneighbours];
-	neighbourhood(f, idx, (Coordinate **) neighbours);
+	int neighbours[f->maxneighbours];
+	neighbourhood(f, idx, (int *) neighbours);
 	int i;
-	for (i = 0; !r->overflow && i < f->maxneighbours && neighbours[i]; ++i) {
-		ripple_push(r, coordstoidx(f, neighbours[i]));
+	for (i = 0; !r->overflow && i < f->maxneighbours && neighbours[i] != -1; ++i) {
+		ripple_push(r, neighbours[i]);
 	}
 }
 
@@ -238,11 +227,11 @@ static void handlepressoverflow(Minefield *f) {
 	for (idx = 0; idx < f->tilecount || (allowreset && !(idx = 0) && !(allowreset = 0)); ++idx) {
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & TILE_PRESSED) || t->flags & TILE_FLAGGED || t->neighbours) continue;
-		Coordinate *neighbours[f->maxneighbours];
-		neighbourhood(f, idx, (Coordinate **) neighbours);
+		int neighbours[f->maxneighbours];
+		neighbourhood(f, idx, (int *) neighbours);
 		int i;
-		for (i = 0; i < f->maxneighbours && neighbours[i] != NULL; ++i) {
-			if (simplepress(f, coordstoidx(f, neighbours[i]))) allowreset = 1;
+		for (i = 0; i < f->maxneighbours && neighbours[i] != -1; ++i) {
+			if (simplepress(f, neighbours[i])) allowreset = 1;
 		}
 	}
 }

@@ -22,28 +22,28 @@ static int nexttileidx(Minefield *f) {
 	return nexttileidx_ = 0;
 }
 
-typedef bool (*neighbourcount_cb)(Minefield *f, Tile *tile, Coordinate *coord, void *payload);
+typedef bool (*neighbourcount_cb)(Minefield *f, Tile *tile, int idx, void *payload);
 
-static int neighbourcount(Minefield *f, Coordinate **neighbours, neighbourcount_cb cb, void *cbpayload) {
+static int neighbourcount(Minefield *f, int *neighbours, neighbourcount_cb cb, void *cbpayload) {
 	int i = 0;
 	int matches = 0;
-	while (neighbours[i] != NULL) {
-		Coordinate *coord = neighbours[i++];
-		Tile *tile = &f->tiles[coordstoidx(f, coord)];
-		if ((*cb)(f, tile, coord, cbpayload)) {
+	while (neighbours[i] != -1) {
+		int idx = neighbours[i++];
+		Tile *tile = &f->tiles[idx];
+		if ((*cb)(f, tile, idx, cbpayload)) {
 			++matches;
 		}
 	}
 	return matches;
 }
 
-static void neighbourfilter(Minefield *f, Coordinate **c, neighbourcount_cb cb, void *cbpayload) {
-	Coordinate **dest = c;
+static void neighbourfilter(Minefield *f, int *c, neighbourcount_cb cb, void *cbpayload) {
+	int *dest = c;
 	int i = 0;
-	while (c[i] != NULL) {
-		Coordinate *coord = c[i];
-		Tile *tile = &f->tiles[coordstoidx(f, coord)];
-		if ((*cb)(f, tile, coord, cbpayload)) {
+	while (c[i] != -1) {
+		int idx = c[i];
+		Tile *tile = &f->tiles[idx];
+		if ((*cb)(f, tile, idx, cbpayload)) {
 			if (&c[i] != dest) {
 				*dest = c[i];
 			}
@@ -51,10 +51,10 @@ static void neighbourfilter(Minefield *f, Coordinate **c, neighbourcount_cb cb, 
 		}
 		i++;
 	}
-	*dest = NULL;
+	*dest = -1;
 }
 
-#define CB(fun) static bool fun(Minefield *f, Tile *tile, Coordinate *coords, void *payload)
+#define CB(fun) static bool fun(Minefield *f, Tile *tile, int idx, void *payload)
 CB(neighbourunpressed_cb) {
 	return !(tile->flags & TILE_PRESSED);
 }
@@ -72,10 +72,9 @@ CB(neighbourneighbour_cb) {
 }
 CB(neighbourdifference_cb) {
 	int i = 0;
-	int idx = coordstoidx(f, coords);
-	Coordinate **set = (Coordinate **) payload;
-	while (set[i] != NULL) {
-		if (coordstoidx(f, set[i]) == idx) return 0;
+	int *set = (int *) payload;
+	while (set[i] != -1) {
+		if (set[i] == idx) return 0;
 		++i;
 	}
 	return 1;
@@ -106,19 +105,18 @@ ACT(act_singleflagging) {
 	GETTILE(tile);
 	if (!(tile->flags & (TILE_PRESSED|TILE_FLAGGED))) return NULL;
 	if (!tile->neighbours) return NULL;
-	Coordinate *neighbours[f->maxneighbours];
-	neighbourhood(f, idx, (Coordinate **) neighbours);
-	int neighbourunknown = neighbourcount(f, (Coordinate **) neighbours, &neighbourunknown_cb, NULL);
+	int neighbours[f->maxneighbours];
+	neighbourhood(f, idx, (int *) neighbours);
+	int neighbourunknown = neighbourcount(f, (int *) neighbours, &neighbourunknown_cb, NULL);
 	if (!neighbourunknown) return NULL;
-	int neighbourflags = neighbourcount(f, (Coordinate **) neighbours, &neighbourflags_cb, NULL);
+	int neighbourflags = neighbourcount(f, (int *) neighbours, &neighbourflags_cb, NULL);
 	if (tile->neighbours != neighbourunknown + neighbourflags) return NULL;
 
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
 	int retidx = 0;
 	int i = 0;
-	while (neighbours[i] != NULL) {
-		Coordinate *c = neighbours[i++];
-		int idx = coordstoidx(f, c);
+	while (neighbours[i] != -1) {
+		int idx = neighbours[i++];
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			Action act;
@@ -136,19 +134,18 @@ ACT(act_safespots) {
 	GETTILE(tile);
 	if (!(tile->flags & (TILE_PRESSED|TILE_FLAGGED))) return NULL;
 	if (!tile->neighbours) return NULL;
-	Coordinate *neighbours[f->maxneighbours];
-	neighbourhood(f, idx, (Coordinate **) neighbours);
-	int neighbourunknown = neighbourcount(f, (Coordinate **) neighbours, &neighbourunknown_cb, NULL);
+	int neighbours[f->maxneighbours];
+	neighbourhood(f, idx, (int *) neighbours);
+	int neighbourunknown = neighbourcount(f, (int *) neighbours, &neighbourunknown_cb, NULL);
 	if (!neighbourunknown) return NULL;
-	int neighbourflags = neighbourcount(f, (Coordinate **) neighbours, &neighbourflags_cb, NULL);
+	int neighbourflags = neighbourcount(f, (int *) neighbours, &neighbourflags_cb, NULL);
 	if (tile->neighbours != neighbourflags) return NULL;
 
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
 	int retidx = 0;
 	int i = 0;
-	while (neighbours[i] != NULL) {
-		Coordinate *c = neighbours[i++];
-		int idx = coordstoidx(f, c);
+	while (neighbours[i] != -1) {
+		int idx = neighbours[i++];
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			Action act;
@@ -178,31 +175,29 @@ ACT(act_dualcheck) {
 	GETTILE(a);
 	/* Tiles: a, b
 	 * Indices: idx, bidx
-	 * Coordinates: bcoord
 	 * Neighbourhoods, all: an, bn
 	 * Neighbourhoods, bomb neighbours: anb, bnb
 	 * Neighbourhoods, unpressed: anu, bnu
 	 * HTH
 	 */
-	Coordinate *an[f->maxneighbours];
-	neighbourhood(f, idx, (Coordinate **) an);
-	Coordinate *anu[f->maxneighbours];
-	{ Coordinate **a = an; Coordinate **b = anu; while ((*b++ = *a++)); }
+	int an[f->maxneighbours];
+	neighbourhood(f, idx, (int *) an);
+	int anu[f->maxneighbours];
+	{ int *a = an; int *b = anu; while ((*b++ = *a++) != -1); }
 	neighbourfilter(f, anu, &neighbourunpressed_cb, NULL);
 	{
 		int i = 0;
-		while (an[i] != NULL) {
-			Coordinate *bcoord = an[i++];
-			int bidx = coordstoidx(f, bcoord);
+		while (an[i] != -1) {
+			int bidx = an[i++];
 			Tile *b = &f->tiles[bidx];
 			if (!(b->flags & TILE_PRESSED) || b->neighbours < a->neighbours) continue;
 			/* B has as many as or more bomb neighbours than A */
 
-			Coordinate *bn[f->maxneighbours];
-			neighbourhood(f, bidx, (Coordinate **) bn);
+			int bn[f->maxneighbours];
+			neighbourhood(f, bidx, (int *) bn);
 
-			Coordinate *bnu[f->maxneighbours];
-			{ Coordinate **a = bn; Coordinate **b = bnu; while ((*b++ = *a++)); }
+			int bnu[f->maxneighbours];
+			{ int *a = bn; int *b = bnu; while ((*b++ = *a++) != -1); }
 			neighbourfilter(f, bnu, &neighbourunpressed_cb, NULL);
 
 			if (!issubset((void **) bnu, (void **) anu)) continue;
@@ -210,21 +205,20 @@ ACT(act_dualcheck) {
 
 			neighbourfilter(f, bnu, &neighbourdifference_cb, anu);
 
-			if (*bnu == NULL) continue;
+			if (*bnu == -1) continue;
 			/* B has unpressed neighbours that A doesn't have */
 			int unflagged = neighbourcount(f, bnu, &neighbournoflags_cb, NULL);
 
 			if (!unflagged) continue;
 
-			int count = 0; while (bnu[count] != NULL) ++count;
+			int count = 0; while (bnu[count] != -1) ++count;
 			if (b->neighbours-a->neighbours > count) continue;
 			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
 			Action act;
 			act.type = (a->neighbours == b->neighbours) ? PRESS : FLAG;
 			int i = 0;
-			while (bnu[i] != NULL) {
-				Coordinate *coord = bnu[i];
-				act.tileidx = coordstoidx(f, coord);
+			while (bnu[i] != -1) {
+				act.tileidx = bnu[i];
 				res[i] = (Action *) malloc(sizeof(Action));
 				*res[i] = act;
 				i++;
