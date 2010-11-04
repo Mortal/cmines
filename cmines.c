@@ -143,7 +143,8 @@ void resettiles(Minefield *f) {
 }
 
 void calcmines(Minefield *f) {
-	f->mines = f->tilecount/(f->effectivedimcount*f->effectivedimcount*f->effectivedimcount);
+	if (f->automines)
+		f->mines = f->tilecount/(f->effectivedimcount*f->effectivedimcount*f->effectivedimcount);
 }
 
 void setmines(Minefield *f) {
@@ -269,7 +270,7 @@ void printfield(Minefield *f) {
 		for (row = 0; row < h; ++row) {
 			int column;
 			for (column = 0; column < w; ++column) {
-				output[row*(w+1)+column] = ' ';
+				output[row*(w+1)+column] = '+';
 			}
 			output[row*(w+1)+column] = '\n';
 		}
@@ -325,6 +326,7 @@ bool isnumber(const char *c) {
 int main(int argc, char *argv[]) {
 	Minefield f;
 	f.dimcount = 0;
+	f.automines = 1;
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -350,6 +352,15 @@ int main(int argc, char *argv[]) {
 			f.dimensions[--d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
+			if (isnumber(arg)) {
+				int mines = strtol(arg, NULL, 0);
+				if (mines < 1) {
+					fprintf(stderr, "Invalid argument %d\n", mines);
+					exit(1);
+				}
+				f.mines = mines;
+				f.automines = 0;
+			}
 		}
 	}
 

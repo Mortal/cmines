@@ -51,6 +51,9 @@ typedef struct {
 	unsigned int presseds;
 	unsigned int flaggeds;
 
+	/* whether mines was set automatically */
+	bool automines;
+
 	unsigned int outputwidth;
 	unsigned int outputheight;
 
