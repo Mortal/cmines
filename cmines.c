@@ -322,6 +322,10 @@ int main(int argc, char *argv[]) {
 	Minefield f;
 	f.dimcount = 0;
 	f.automines = 1;
+	if (argc <= 2) {
+		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
+		exit(1);
+	}
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
