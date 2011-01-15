@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+//#include <unistd.h>
 #include <ncurses.h>
 #include "cmines.h"
 #include "ai.h"
@@ -248,6 +249,13 @@ void press(Minefield *f, int idx) {
 	while (r.first != r.last) {
 		ripplepress(f, &r);
 	}
+	if (f->ncurses) {
+		int row = outputrow(f, idxtocoords(f, idx));
+		int column = outputcolumn(f, idxtocoords(f, idx));
+		mvaddch(row, column, tilechar(f->tiles+idx));
+		refresh();
+		//usleep(1000);
+	}
 	if (r.overflow) handlepressoverflow(f);
 }
 
@@ -415,7 +423,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		time_t now = time(NULL);
-		if (giveup || f.ncurses || f.state != STATE_PLAY || now != lastprint) {
+		if (giveup || f.state != STATE_PLAY || now != lastprint) {
 			lastprint = now;
 			printfield(&f);
 		}
