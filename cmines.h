@@ -1,12 +1,18 @@
 #ifndef CMINES_H
 #define CMINES_H
 
-#define TRUE (1)
-#define FALSE (0)
+#ifndef TRUE
+	#define TRUE (1)
+#endif
+#ifndef FALSE
+	#define FALSE (0)
+#endif
 
 typedef unsigned int Coordinate;
 typedef unsigned int Dimension;
-typedef char bool;
+#ifndef bool
+	typedef char bool;
+#endif
 
 #define TILE_MINE 0x1
 #define TILE_PRESSED 0x2
@@ -64,6 +70,9 @@ typedef struct {
 	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
 	 * Accessed via idxtocoords and coordstoidx. */
 	Coordinate *coordinatesets;
+
+	/* whether to use ncurses */
+	bool ncurses;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */

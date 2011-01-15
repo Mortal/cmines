@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <ncurses.h>
 #include "cmines.h"
 #include "ai.h"
 
@@ -279,7 +280,12 @@ void printfield(Minefield *f) {
 		}
 	}
 	output[(w+1)*h] = '\0';
-	printf("%s", output);
+	if (f->ncurses) {
+		mvprintw(0, 0, "%s", output);
+		refresh();
+	} else {
+		printf("%s", output);
+	}
 }
 
 void pressrandom(Minefield *f, bool blanksonly) {
@@ -322,6 +328,7 @@ int main(int argc, char *argv[]) {
 	Minefield f;
 	f.dimcount = 0;
 	f.automines = 1;
+	f.ncurses = 0;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -339,6 +346,7 @@ int main(int argc, char *argv[]) {
 			}
 			++f.dimcount;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
+			// --mines takes a numerical argument, so skip that
 			++i;
 		}
 	}
@@ -369,6 +377,8 @@ int main(int argc, char *argv[]) {
 				f.mines = mines;
 				f.automines = 0;
 			}
+		} else if (!strcmp(arg, "--ncurses")) {
+			f.ncurses = 1;
 		}
 	}
 
@@ -381,6 +391,7 @@ int main(int argc, char *argv[]) {
 	calcmines(&f);
 	setmines(&f);
 	pressrandom(&f, 1);
+	if (f.ncurses) initscr();
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;
@@ -404,12 +415,17 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		time_t now = time(NULL);
-		if (giveup || f.state != STATE_PLAY || now != lastprint) {
+		if (giveup || f.ncurses || f.state != STATE_PLAY || now != lastprint) {
 			lastprint = now;
 			printfield(&f);
 		}
 		(*ply.freefun)(act);
 		if (giveup) break;
+	}
+	if (f.ncurses) {
+		endwin();
+		f.ncurses = 0;
+		printfield(&f);
 	}
 	if (f.state == STATE_PLAY) {
 		printf("You give up? Too bad!\n");
