@@ -1,0 +1,5 @@
+Tile A has unpressed, unflagged neighbours AN, of which AB are bombs. Tile B has unpressed, unflagged neighbours BN, of which BB are bombs.
+
+If BN is a strict superset of AN (that is, |BN-AN| > 0 and |AN-BN| = 0), then
+	If |BN-AN| = BB-AB, then all of BN-AN are bombs.
+	If BB = AB, then all of BN-AN are safe.

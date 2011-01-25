@@ -159,10 +159,10 @@ ACT(act_safespots) {
 	return ret;
 }
 
-static bool issubset(void **superset, void **subset) {
-	while (*subset != NULL) {
-		void **p = superset;
-		while (*p != NULL) {
+static bool issubset(int *superset, int *subset) {
+	while (*subset != -1) {
+		int *p = superset;
+		while (*p != -1) {
 			if (*p == *subset) return 0;
 			++p;
 		}
@@ -171,51 +171,102 @@ static bool issubset(void **superset, void **subset) {
 	return 1;
 }
 
+#ifdef DEBUG
+/* aid in debugging with gdb */
+void printtile(Minefield *f, int idx) {
+	Tile *t = &f->tiles[idx];
+	Coordinate *coords = idxtocoords(f, idx);
+	Dimension d;
+	for (d = 0; d < f->dimcount; ++d) {
+		printf("%d,", coords[d]);
+	}
+	printf(" neighbours=%d flags=%x\n", t->neighbours, t->flags);
+}
+
+void printtiles(Minefield *f, int *tiles) {
+	int count = 0;
+	while (tiles[count] != -1) {
+		int idx = tiles[count++];
+		printtile(f, idx);
+	}
+	printf("%d tiles\n", count);
+}
+#endif
+
 ACT(act_dualcheck) {
 	GETTILE(a);
 	/* Tiles: a, b
 	 * Indices: idx, bidx
 	 * Neighbourhoods, all: an, bn
-	 * Neighbourhoods, bomb neighbours: anb, bnb
-	 * Neighbourhoods, unpressed: anu, bnu
+	 * Neighbourhoods, bomb count: anb, bnb (the number of the tile minus the number of flagged neighbours)
+	 * Neighbourhoods, unpressed, unflagged: anu, bnu
 	 * HTH
 	 */
+
+	// get a's neighbourhood
 	int an[f->maxneighbours];
 	neighbourhood(f, idx, (int *) an);
+
+	// get a's bomb neighbour count minus already flagged bombs
+	int anb = a->neighbours;
+	{
+		int i = 0;
+		while (an[i] != -1) {
+			if (f->tiles[an[i++]].flags & TILE_FLAGGED) {
+				--anb;
+			}
+		}
+	}
+
+	// get a's unknown neighbourhood (unflagged, unpressed)
 	int anu[f->maxneighbours];
 	{ int *a = an; int *b = anu; while ((*b++ = *a++) != -1); }
-	neighbourfilter(f, anu, &neighbourunpressed_cb, NULL);
+	neighbourfilter(f, anu, &neighbourunknown_cb, NULL);
+
 	{
 		int i = 0;
 		while (an[i] != -1) {
 			int bidx = an[i++];
 			Tile *b = &f->tiles[bidx];
-			if (!(b->flags & TILE_PRESSED) || b->neighbours < a->neighbours) continue;
-			/* B has as many as or more bomb neighbours than A */
 
+			if (!(b->flags & TILE_PRESSED)) continue;
+
+			// get b's neighbourhood
 			int bn[f->maxneighbours];
-			neighbourhood(f, bidx, (int *) bn);
+			neighbourhood(f, idx, (int *) bn);
 
+			// get b's bomb neighbour count minus already flagged bombs
+			int bnb = b->neighbours;
+			{
+				int i = 0;
+				while (bn[i] != -1) {
+					if (f->tiles[bn[i++]].flags & TILE_FLAGGED) {
+						--bnb;
+					}
+				}
+			}
+
+			// get b's unknown neighbourhood (unflagged, unpressed)
 			int bnu[f->maxneighbours];
 			{ int *a = bn; int *b = bnu; while ((*b++ = *a++) != -1); }
-			neighbourfilter(f, bnu, &neighbourunpressed_cb, NULL);
+			neighbourfilter(f, bnu, &neighbourunknown_cb, NULL);
 
-			if (!issubset((void **) bnu, (void **) anu)) continue;
-			/* A has no bomb neighbours that B doesn't have */
+			if (!issubset(bnu, anu)) continue;
 
 			neighbourfilter(f, bnu, &neighbourdifference_cb, anu);
 
-			if (*bnu == -1) continue;
-			/* B has unpressed neighbours that A doesn't have */
-			int unflagged = neighbourcount(f, bnu, &neighbournoflags_cb, NULL);
-
-			if (!unflagged) continue;
-
 			int count = 0; while (bnu[count] != -1) ++count;
-			if (b->neighbours-a->neighbours > count) continue;
-			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
+			if (!count) continue;
+
 			Action act;
-			act.type = (a->neighbours == b->neighbours) ? PRESS : FLAG;
+			if (bnb == anb) {
+				act.type = PRESS;
+			} else if (count == bnb-anb) {
+				act.type = FLAG;
+			} else {
+				continue;
+			}
+			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
 			int i = 0;
 			while (bnu[i] != -1) {
 				act.tileidx = bnu[i];
