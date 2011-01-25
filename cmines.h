@@ -71,8 +71,9 @@ typedef struct {
 	 * Accessed via idxtocoords and coordstoidx. */
 	Coordinate *coordinatesets;
 
-	/* whether to use ncurses */
+	/* ncurses data */
 	bool ncurses;
+	void *ncursesdata;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */

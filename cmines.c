@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <time.h>
 //#include <unistd.h>
-#include <ncurses.h>
 #include "cmines.h"
+#include "screen.h"
 #include "ai.h"
 
 char tilechar(Tile *tile) {
@@ -288,12 +288,7 @@ void printfield(Minefield *f) {
 		}
 	}
 	output[(w+1)*h] = '\0';
-	if (f->ncurses) {
-		mvprintw(0, 0, "%s", output);
-		refresh();
-	} else {
-		printf("%s", output);
-	}
+	updatefield(f, output);
 }
 
 void pressrandom(Minefield *f, bool blanksonly) {
@@ -337,6 +332,7 @@ int main(int argc, char *argv[]) {
 	f.dimcount = 0;
 	f.automines = 1;
 	f.ncurses = 0;
+	f.ncursesdata = NULL;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -400,6 +396,7 @@ int main(int argc, char *argv[]) {
 	setmines(&f);
 	pressrandom(&f, 1);
 	if (f.ncurses) initscr();
+	setfieldsize(&f);
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;
