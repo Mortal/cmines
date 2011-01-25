@@ -9,7 +9,7 @@ all: $(OBJECTS)
 	gcc $(OPTS) -lncurses $(OBJECTS) -o cmines
 
 clean:
-	rm -v $(OBJECTS) cmines || true
+	rm -vf $(OBJECTS) cmines
 
 ai.o: ai.c ai.h cmines.h Player.h
 cmines.o: cmines.c cmines.h screen.h ai.h
