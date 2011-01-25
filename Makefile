@@ -3,7 +3,7 @@ OPTS=-Wall -ggdb
 .c.o:
 	gcc $(OPTS) -c $<
 
-OBJECTS = ai.o cmines.o
+OBJECTS = ai.o cmines.o screen.o
 
 all: $(OBJECTS)
 	gcc $(OPTS) -lncurses $(OBJECTS) -o cmines
@@ -11,7 +11,8 @@ all: $(OBJECTS)
 clean:
 	rm -v $(OBJECTS) cmines || true
 
-ai.o: ai.c ai.h Player.h
-cmines.o: cmines.c cmines.h ai.h
+ai.o: ai.c ai.h cmines.h Player.h
+cmines.o: cmines.c cmines.h screen.h ai.h
+screen.o: screen.c cmines.h screen.h
 
 # DO NOT DELETE
