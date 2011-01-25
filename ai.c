@@ -161,10 +161,17 @@ ACT(act_safespots) {
 
 static bool issubset(int *superset, int *subset) {
 	while (*subset != -1) {
+		bool exists = 0;
 		int *p = superset;
 		while (*p != -1) {
-			if (*p == *subset) return 0;
+			if (*p == *subset) {
+				exists = 1;
+				break;
+			}
 			++p;
+		}
+		if (!exists) {
+			return 0;
 		}
 		++subset;
 	}
