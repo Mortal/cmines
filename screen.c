@@ -75,7 +75,6 @@ void updatetile(Minefield *f, int idx) {
 	WINDOW *w = nc->field;
 	mvwaddch(w, row, column, c);
 	wrefresh(w);
-	usleep(1000);
 }
 
 void speak(Minefield *f, const char *msg) {

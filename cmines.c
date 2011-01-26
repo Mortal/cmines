@@ -251,6 +251,7 @@ void press(Minefield *f, int idx) {
 		ripplepress(f, &r);
 	}
 	if (r.overflow) handlepressoverflow(f);
+	if (f->sleep) usleep(20000);
 }
 
 void flag(Minefield *f, int idx) {
@@ -328,6 +329,7 @@ int main(int argc, char *argv[]) {
 	f.automines = 1;
 	f.ncurses = 0;
 	f.ncursesdata = NULL;
+	f.sleep = 0;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -378,6 +380,8 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (!strcmp(arg, "--ncurses")) {
 			f.ncurses = 1;
+		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
+			f.sleep = 1;
 		}
 	}
 
@@ -429,7 +433,7 @@ int main(int argc, char *argv[]) {
 	} else if (f.state == STATE_WON) {
 		speak(&f, "Congratulations!\n");
 	}
-	usleep(1000000);
+	if (f.sleep) usleep(800000);
 	if (f.ncurses) {
 		endwin();
 		f.ncurses = 0;

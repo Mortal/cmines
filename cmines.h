@@ -74,6 +74,9 @@ typedef struct {
 	/* ncurses data */
 	bool ncurses;
 	void *ncursesdata;
+
+	/* whether we should sleep occasionally */
+	bool sleep;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */
