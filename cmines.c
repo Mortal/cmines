@@ -330,6 +330,7 @@ int main(int argc, char *argv[]) {
 	f.ncurses = 0;
 	f.ncursesdata = NULL;
 	f.sleep = 0;
+	f.testmode = 0;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -382,6 +383,8 @@ int main(int argc, char *argv[]) {
 			f.ncurses = 1;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f.sleep = 1;
+		} else if (!strcmp(arg, "-t") || !strcmp(arg, "--test")) {
+			f.testmode = 1;
 		}
 	}
 
@@ -390,54 +393,62 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL) & 0xFFFFFFFF);
 	alloctiles(&f);
-	resettiles(&f);
-	calcmines(&f);
-	setmines(&f);
-	pressrandom(&f, 1);
-	if (f.ncurses) initscr();
-	setfieldsize(&f);
-	printfield(&f);
-	f.state = STATE_PLAY;
-	Player ply;
-	AI(&ply);
-	time_t lastprint = 0;
-	while (f.state == STATE_PLAY) {
-		Action **act = (*ply.actfun)(&f);
-		bool giveup = 0;
-		int i = 0;
-		while (act[i] != NULL) {
-			Action *a = act[i++];
-			if (a->type == GIVEUP) {
-				giveup = 1;
-				break;
+	do {
+		resettiles(&f);
+		calcmines(&f);
+		setmines(&f);
+		pressrandom(&f, 1);
+		if (f.ncurses && !f.testmode) initscr();
+		setfieldsize(&f);
+		printfield(&f);
+		f.state = STATE_PLAY;
+		Player ply;
+		AI(&ply);
+		time_t lastprint = 0;
+		while (f.state == STATE_PLAY) {
+			Action **act = (*ply.actfun)(&f);
+			bool giveup = 0;
+			int i = 0;
+			while (act[i] != NULL) {
+				Action *a = act[i++];
+				if (a->type == GIVEUP) {
+					giveup = 1;
+					break;
+				}
+				int tileidx = a->tileidx;
+				if (a->type == PRESS) {
+					press(&f, tileidx);
+				} else if (a->type == FLAG) {
+					flag(&f, tileidx);
+				}
 			}
-			int tileidx = a->tileidx;
-			if (a->type == PRESS) {
-				press(&f, tileidx);
-			} else if (a->type == FLAG) {
-				flag(&f, tileidx);
+			time_t now = time(NULL);
+			if (giveup || f.state != STATE_PLAY || now != lastprint) {
+				lastprint = now;
+				printfield(&f);
 			}
+			(*ply.freefun)(act);
+			if (giveup) break;
 		}
-		time_t now = time(NULL);
-		if (giveup || f.state != STATE_PLAY || now != lastprint) {
-			lastprint = now;
+		const char *msg = "No message";
+		if (f.state == STATE_PLAY) {
+			msg = "You give up? Too bad!\n";
+		} else if (f.state == STATE_LOST) {
+			msg = "Too bad!\n";
+		} else if (f.state == STATE_WON) {
+			msg = "Congratulations!\n";
+		}
+		if (f.testmode) {
+			printf("%s", msg);
+		} else {
+			speak(&f, msg);
+		}
+		if (f.sleep && !f.testmode) usleep(800000);
+		if (f.ncurses && !f.testmode) {
+			endwin();
+			f.ncurses = 0;
 			printfield(&f);
 		}
-		(*ply.freefun)(act);
-		if (giveup) break;
-	}
-	if (f.state == STATE_PLAY) {
-		speak(&f, "You give up? Too bad!\n");
-	} else if (f.state == STATE_LOST) {
-		speak(&f, "Too bad!\n");
-	} else if (f.state == STATE_WON) {
-		speak(&f, "Congratulations!\n");
-	}
-	if (f.sleep) usleep(800000);
-	if (f.ncurses) {
-		endwin();
-		f.ncurses = 0;
-		printfield(&f);
-	}
+	} while (f.testmode);
 	return 0;
 }

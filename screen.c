@@ -5,7 +5,7 @@
 #include "screen.h"
 
 void delwins(Minefield *f) {
-	if (!f->ncurses || f->ncursesdata == NULL) {
+	if (!f->ncurses || f->testmode || f->ncursesdata == NULL) {
 		return;
 	}
 	NC *nc = (NC *) f->ncursesdata;
@@ -16,7 +16,7 @@ void delwins(Minefield *f) {
 }
 
 void setfieldsize(Minefield *f) {
-	if (!f->ncurses) return;
+	if (!f->ncurses || f->testmode) return;
 
 	delwins(f);
 
@@ -53,6 +53,7 @@ void setfieldsize(Minefield *f) {
 }
 
 void updatefield(Minefield *f, const char *field) {
+	if (f->testmode) return;
 	if (!f->ncurses) {
 		printf("%s", field);
 		return;
@@ -65,6 +66,7 @@ void updatefield(Minefield *f, const char *field) {
 }
 
 void updatetile(Minefield *f, int idx) {
+	if (f->testmode) return;
 	if (!f->ncurses || f->ncursesdata == NULL) {
 		return;
 	}
@@ -78,6 +80,7 @@ void updatetile(Minefield *f, int idx) {
 }
 
 void speak(Minefield *f, const char *msg) {
+	if (f->testmode) return;
 	if (!f->ncurses) {
 		printf("%s\n", msg);
 		return;

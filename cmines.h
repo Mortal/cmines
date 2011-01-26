@@ -77,6 +77,9 @@ typedef struct {
 
 	/* whether we should sleep occasionally */
 	bool sleep;
+
+	/* Testing mode (no UI, keep running) */
+	bool testmode;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */

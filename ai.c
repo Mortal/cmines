@@ -321,4 +321,6 @@ static void actfree(Action **act) {
 void AI(Player *ply) {
 	Player ai = {&act, &actfree};
 	*ply = ai;
+	allowcoordreset = 0;
+	nexttileidx_ = 0;
 }
