@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <curses.h>
 #include "cmines.h"
 #include "screen.h"
@@ -43,6 +44,7 @@ void setfieldsize(Minefield *f) {
 	scrollok(speak, TRUE);
 	wrefresh(field);
 	wrefresh(speak);
+	refresh();
 
 	NC *nc = f->ncursesdata = (NC *) malloc(sizeof(NC));
 
@@ -60,6 +62,20 @@ void updatefield(Minefield *f, const char *field) {
 	mvwprintw(w, 0, 0, "%s", field);
 	wrefresh(w);
 	refresh();
+}
+
+void updatetile(Minefield *f, int idx) {
+	if (!f->ncurses || f->ncursesdata == NULL) {
+		return;
+	}
+	int row = outputrow(f, idxtocoords(f, idx));
+	int column = outputcolumn(f, idxtocoords(f, idx));
+	char c = tilechar(f->tiles+idx);
+	NC *nc = (NC *) f->ncursesdata;
+	WINDOW *w = nc->field;
+	mvwaddch(w, row, column, c);
+	wrefresh(w);
+	usleep(1000);
 }
 
 void speak(Minefield *f, const char *msg) {

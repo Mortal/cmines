@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
-//#include <unistd.h>
+#include <unistd.h>
 #include "cmines.h"
 #include "screen.h"
 #include "ai.h"
@@ -206,6 +206,7 @@ bool simplepress(Minefield *f, int idx) {
 		return 1;
 	}
 	++f->presseds;
+	updatetile(f, idx);
 	checkstate(f);
 	return 1;
 }
@@ -249,13 +250,6 @@ void press(Minefield *f, int idx) {
 	while (r.first != r.last) {
 		ripplepress(f, &r);
 	}
-	if (f->ncurses) {
-		int row = outputrow(f, idxtocoords(f, idx));
-		int column = outputcolumn(f, idxtocoords(f, idx));
-		mvaddch(row, column, tilechar(f->tiles+idx));
-		refresh();
-		//usleep(1000);
-	}
 	if (r.overflow) handlepressoverflow(f);
 }
 
@@ -264,6 +258,7 @@ void flag(Minefield *f, int idx) {
 	if (tile->flags & TILE_FLAGGED) return;
 	++f->flaggeds;
 	tile->flags |= TILE_FLAGGED;
+	updatetile(f, idx);
 }
 
 void printfield(Minefield *f) {
@@ -427,17 +422,18 @@ int main(int argc, char *argv[]) {
 		(*ply.freefun)(act);
 		if (giveup) break;
 	}
+	if (f.state == STATE_PLAY) {
+		speak(&f, "You give up? Too bad!\n");
+	} else if (f.state == STATE_LOST) {
+		speak(&f, "Too bad!\n");
+	} else if (f.state == STATE_WON) {
+		speak(&f, "Congratulations!\n");
+	}
+	usleep(1000000);
 	if (f.ncurses) {
 		endwin();
 		f.ncurses = 0;
 		printfield(&f);
-	}
-	if (f.state == STATE_PLAY) {
-		printf("You give up? Too bad!\n");
-	} else if (f.state == STATE_LOST) {
-		printf("Too bad!\n");
-	} else if (f.state == STATE_WON) {
-		printf("Congratulations!\n");
 	}
 	return 0;
 }

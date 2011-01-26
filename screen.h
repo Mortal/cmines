@@ -11,6 +11,7 @@ typedef struct {
 void delwins(Minefield *);
 void setfieldsize(Minefield *);
 void updatefield(Minefield *, const char *field);
+void updatetile(Minefield *f, int idx);
 void speak(Minefield *, const char *msg);
 
 #endif
