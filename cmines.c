@@ -328,8 +328,6 @@ int main(int argc, char *argv[]) {
 	Minefield f;
 	f.dimcount = 0;
 	f.automines = 1;
-	f.ncurses = 0;
-	f.ncursesdata = NULL;
 	f.sleep = 0;
 	f.testmode = 0;
 	if (argc <= 2) {
@@ -356,6 +354,7 @@ int main(int argc, char *argv[]) {
 	f.dimensions = malloc(sizeof(Coordinate)*f.dimcount);
 	f.dimensionproducts = malloc(sizeof(Coordinate)*f.dimcount);
 	Dimension d = f.dimcount;
+	bool ncurses = 0;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
 		if (isnumber(arg)) {
@@ -381,7 +380,7 @@ int main(int argc, char *argv[]) {
 				f.automines = 0;
 			}
 		} else if (!strcmp(arg, "--ncurses")) {
-			f.ncurses = 1;
+			ncurses = 1;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f.sleep = 1;
 		} else if (!strcmp(arg, "-t") || !strcmp(arg, "--test")) {
@@ -393,6 +392,7 @@ int main(int argc, char *argv[]) {
 	f.coordinatesets = 0;
 
 	srand(time(NULL) & 0xFFFFFFFF);
+	// TODO: only use ncurses if ncurses == 1
 	Screen scr;
 	f.scr = &scr;
 	ncscreen(&scr, &f);
@@ -402,7 +402,7 @@ int main(int argc, char *argv[]) {
 		calcmines(&f);
 		setmines(&f);
 		pressrandom(&f, 1);
-		if (f.ncurses && !f.testmode) scr.init(&f);
+		scr.init(&f);
 		printfield(&f);
 		f.state = STATE_PLAY;
 		Player ply;
@@ -448,10 +448,6 @@ int main(int argc, char *argv[]) {
 		}
 		if (f.sleep && !f.testmode) usleep(800000);
 		scr.deinit(&f);
-		if (f.ncurses && !f.testmode) {
-			f.ncurses = 0;
-			printfield(&f);
-		}
 	} while (f.testmode);
 	return 0;
 }

@@ -71,10 +71,6 @@ typedef struct {
 	 * Accessed via idxtocoords and coordstoidx. */
 	Coordinate *coordinatesets;
 
-	/* ncurses data */
-	bool ncurses;
-	void *ncursesdata;
-
 	/* whether we should sleep occasionally */
 	bool sleep;
 

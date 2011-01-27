@@ -11,21 +11,19 @@ typedef struct {
 } NC;
 
 void screendeinit(Minefield *f) {
-	if (!f->ncurses || f->testmode || f->ncursesdata == NULL) {
-		return;
-	}
+	if (f->scr->data == NULL) return;
+	NC *nc = (NC *) f->scr->data;
 	endwin();
-	NC *nc = (NC *) f->ncursesdata;
 	delwin(nc->field);
 	delwin(nc->speak);
-	free(f->ncursesdata);
-	f->ncursesdata = NULL;
+	free(f->scr->data);
+	f->scr->data = NULL;
 }
 
 void screeninit(Minefield *f) {
-	if (!f->ncurses || f->testmode) return;
-
 	screendeinit(f);
+
+	NC *nc = f->scr->data = (NC *) malloc(sizeof(NC));
 
 	initscr();
 
@@ -37,37 +35,29 @@ void screeninit(Minefield *f) {
 	getmaxyx(stdscr, wh, ww);
 
 	/* allocate field of given size */
-	WINDOW *field = newwin(height, width, 0, 0);
-
-	WINDOW *speak;
+	nc->field = newwin(height, width, 0, 0);
 
 	int cw = ww-width;
 	if (cw < 0) cw = 0;
 	int ch = wh-height;
 	if (ch < 0) ch = 0;
 	if (ch*10 > cw) {
-		speak = newwin(0, 0, height, 0);
+		nc->speak = newwin(0, 0, height, 0);
 	} else {
-		speak = newwin(0, 0, 0, width);
+		nc->speak = newwin(0, 0, 0, width);
 	}
-	scrollok(speak, TRUE);
-	wrefresh(field);
-	wrefresh(speak);
+	scrollok(nc->speak, TRUE);
+	wrefresh(nc->field);
+	wrefresh(nc->speak);
 	refresh();
-
-	NC *nc = f->ncursesdata = (NC *) malloc(sizeof(NC));
-
-	nc->field = field;
-	nc->speak = speak;
 }
 
 void updatefield(Minefield *f, const char *field) {
-	if (f->testmode) return;
-	if (!f->ncurses) {
+	NC *nc = (NC *) f->scr->data;
+	if (nc == NULL) {
 		printf("%s", field);
 		return;
 	}
-	NC *nc = (NC *) f->ncursesdata;
 	WINDOW *w = nc->field;
 	mvwprintw(w, 0, 0, "%s", field);
 	wrefresh(w);
@@ -75,26 +65,24 @@ void updatefield(Minefield *f, const char *field) {
 }
 
 void updatetile(Minefield *f, int idx) {
-	if (f->testmode) return;
-	if (!f->ncurses || f->ncursesdata == NULL) {
+	NC *nc = (NC *) f->scr->data;
+	if (nc == NULL) {
 		return;
 	}
 	int row = outputrow(f, idxtocoords(f, idx));
 	int column = outputcolumn(f, idxtocoords(f, idx));
 	char c = tilechar(f->tiles+idx);
-	NC *nc = (NC *) f->ncursesdata;
 	WINDOW *w = nc->field;
 	mvwaddch(w, row, column, c);
 	wrefresh(w);
 }
 
 void speak(Minefield *f, const char *msg) {
-	if (f->testmode) return;
-	if (!f->ncurses) {
+	NC *nc = (NC *) f->scr->data;
+	if (nc == NULL) {
 		printf("%s\n", msg);
 		return;
 	}
-	NC *nc = (NC *) f->ncursesdata;
 	WINDOW *s = nc->speak;
 	wprintw(s, msg);
 	wrefresh(s);
@@ -106,4 +94,5 @@ void ncscreen(Screen *s, Minefield *f) {
 	s->updatefield = &updatefield;
 	s->updatetile = &updatetile;
 	s->speak = &speak;
+	s->data = NULL;
 }

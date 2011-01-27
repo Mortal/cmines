@@ -13,6 +13,7 @@ typedef struct _Screen {
 	scrupdatefield updatefield;
 	scrupdatetile updatetile;
 	scrspeak speak;
+	void *data;
 } Screen;
 
 #endif
