@@ -4,10 +4,11 @@
 #include "cmines.h"
 #include "screen.h"
 
-void delwins(Minefield *f) {
+void screendeinit(Minefield *f) {
 	if (!f->ncurses || f->testmode || f->ncursesdata == NULL) {
 		return;
 	}
+	endwin();
 	NC *nc = (NC *) f->ncursesdata;
 	delwin(nc->field);
 	delwin(nc->speak);
@@ -15,10 +16,12 @@ void delwins(Minefield *f) {
 	f->ncursesdata = NULL;
 }
 
-void setfieldsize(Minefield *f) {
+void screeninit(Minefield *f) {
 	if (!f->ncurses || f->testmode) return;
 
-	delwins(f);
+	screendeinit(f);
+
+	initscr();
 
 	int width = f->outputwidth+1;
 	int height = f->outputheight+1;

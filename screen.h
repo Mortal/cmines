@@ -8,8 +8,8 @@ typedef struct {
 	WINDOW *speak;
 } NC;
 
-void delwins(Minefield *);
-void setfieldsize(Minefield *);
+void screeninit(Minefield *);
+void screendeinit(Minefield *);
 void updatefield(Minefield *, const char *field);
 void updatetile(Minefield *f, int idx);
 void speak(Minefield *, const char *msg);

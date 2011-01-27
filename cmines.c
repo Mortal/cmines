@@ -398,8 +398,7 @@ int main(int argc, char *argv[]) {
 		calcmines(&f);
 		setmines(&f);
 		pressrandom(&f, 1);
-		if (f.ncurses && !f.testmode) initscr();
-		setfieldsize(&f);
+		if (f.ncurses && !f.testmode) screeninit(&f);
 		printfield(&f);
 		f.state = STATE_PLAY;
 		Player ply;
@@ -444,8 +443,8 @@ int main(int argc, char *argv[]) {
 			speak(&f, msg);
 		}
 		if (f.sleep && !f.testmode) usleep(800000);
+		screendeinit(&f);
 		if (f.ncurses && !f.testmode) {
-			endwin();
 			f.ncurses = 0;
 			printfield(&f);
 		}
