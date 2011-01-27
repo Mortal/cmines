@@ -330,7 +330,6 @@ int main(int argc, char *argv[]) {
 	f.dimcount = 0;
 	f.automines = 1;
 	f.sleep = 0;
-	f.testmode = 0;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -386,8 +385,6 @@ int main(int argc, char *argv[]) {
 			screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f.sleep = 1;
-		} else if (!strcmp(arg, "-t") || !strcmp(arg, "--test")) {
-			f.testmode = 1;
 		}
 	}
 
@@ -406,57 +403,51 @@ int main(int argc, char *argv[]) {
 			break;
 	}
 	alloctiles(&f);
-	do {
-		resettiles(&f);
-		calcmines(&f);
-		setmines(&f);
-		pressrandom(&f, 1);
-		scr.init(&f);
-		printfield(&f);
-		f.state = STATE_PLAY;
-		Player ply;
-		AI(&ply);
-		time_t lastprint = 0;
-		while (f.state == STATE_PLAY) {
-			Action **act = (*ply.actfun)(&f);
-			bool giveup = 0;
-			int i = 0;
-			while (act[i] != NULL) {
-				Action *a = act[i++];
-				if (a->type == GIVEUP) {
-					giveup = 1;
-					break;
-				}
-				int tileidx = a->tileidx;
-				if (a->type == PRESS) {
-					press(&f, tileidx);
-				} else if (a->type == FLAG) {
-					flag(&f, tileidx);
-				}
+	resettiles(&f);
+	calcmines(&f);
+	setmines(&f);
+	pressrandom(&f, 1);
+	scr.init(&f);
+	printfield(&f);
+	f.state = STATE_PLAY;
+	Player ply;
+	AI(&ply);
+	time_t lastprint = 0;
+	while (f.state == STATE_PLAY) {
+		Action **act = (*ply.actfun)(&f);
+		bool giveup = 0;
+		int i = 0;
+		while (act[i] != NULL) {
+			Action *a = act[i++];
+			if (a->type == GIVEUP) {
+				giveup = 1;
+				break;
 			}
-			time_t now = time(NULL);
-			if (giveup || f.state != STATE_PLAY || now != lastprint) {
-				lastprint = now;
-				printfield(&f);
+			int tileidx = a->tileidx;
+			if (a->type == PRESS) {
+				press(&f, tileidx);
+			} else if (a->type == FLAG) {
+				flag(&f, tileidx);
 			}
-			(*ply.freefun)(act);
-			if (giveup) break;
 		}
-		const char *msg = "No message";
-		if (f.state == STATE_PLAY) {
-			msg = "You give up? Too bad!\n";
-		} else if (f.state == STATE_LOST) {
-			msg = "Too bad!\n";
-		} else if (f.state == STATE_WON) {
-			msg = "Congratulations!\n";
+		time_t now = time(NULL);
+		if (giveup || f.state != STATE_PLAY || now != lastprint) {
+			lastprint = now;
+			printfield(&f);
 		}
-		if (f.testmode) {
-			printf("%s", msg);
-		} else {
-			scr.speak(&f, msg);
-		}
-		if (f.sleep && !f.testmode) usleep(800000);
-		scr.deinit(&f);
-	} while (f.testmode);
+		(*ply.freefun)(act);
+		if (giveup) break;
+	}
+	const char *msg = "No message";
+	if (f.state == STATE_PLAY) {
+		msg = "You give up? Too bad!\n";
+	} else if (f.state == STATE_LOST) {
+		msg = "Too bad!\n";
+	} else if (f.state == STATE_WON) {
+		msg = "Congratulations!\n";
+	}
+	scr.speak(&f, msg);
+	if (f.sleep) usleep(800000);
+	scr.deinit(&f);
 	return 0;
 }

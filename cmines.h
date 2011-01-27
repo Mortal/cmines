@@ -74,9 +74,6 @@ typedef struct _Minefield {
 	/* whether we should sleep occasionally */
 	bool sleep;
 
-	/* Testing mode (no UI, keep running) */
-	bool testmode;
-
 	/* Screen functions */
 	struct _Screen *scr;
 } Minefield;
