@@ -7,6 +7,7 @@
 #include "cmines.h"
 #include "Screen.h"
 #include "ncscreen.h"
+#include "dumbscreen.h"
 #include "ai.h"
 
 char tilechar(Tile *tile) {
@@ -354,7 +355,9 @@ int main(int argc, char *argv[]) {
 	f.dimensions = malloc(sizeof(Coordinate)*f.dimcount);
 	f.dimensionproducts = malloc(sizeof(Coordinate)*f.dimcount);
 	Dimension d = f.dimcount;
-	bool ncurses = 0;
+#define SCREEN_DUMB (0)
+#define SCREEN_NCURSES (1)
+	int screentype = 0;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
 		if (isnumber(arg)) {
@@ -380,7 +383,7 @@ int main(int argc, char *argv[]) {
 				f.automines = 0;
 			}
 		} else if (!strcmp(arg, "--ncurses")) {
-			ncurses = 1;
+			screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f.sleep = 1;
 		} else if (!strcmp(arg, "-t") || !strcmp(arg, "--test")) {
@@ -392,10 +395,16 @@ int main(int argc, char *argv[]) {
 	f.coordinatesets = 0;
 
 	srand(time(NULL) & 0xFFFFFFFF);
-	// TODO: only use ncurses if ncurses == 1
 	Screen scr;
 	f.scr = &scr;
-	ncscreen(&scr, &f);
+	switch (screentype) {
+		case SCREEN_NCURSES:
+			ncscreen(&scr, &f);
+			break;
+		default:
+			dumbscreen(&scr, &f);
+			break;
+	}
 	alloctiles(&f);
 	do {
 		resettiles(&f);

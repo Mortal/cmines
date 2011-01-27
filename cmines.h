@@ -31,7 +31,7 @@ enum FieldState {
 	STATE_LOST
 };
 
-typedef struct {
+typedef struct _Minefield {
 	/* Field dimensions, most significant dimension first.
 	 * I.e. {..., height, width}. */
 	Coordinate *dimensions;
