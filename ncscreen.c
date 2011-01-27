@@ -10,7 +10,7 @@ typedef struct {
 	WINDOW *speak;
 } NC;
 
-void screendeinit(Minefield *f) {
+static void screendeinit(Minefield *f) {
 	if (f->scr->data == NULL) return;
 	NC *nc = (NC *) f->scr->data;
 	endwin();
@@ -20,7 +20,7 @@ void screendeinit(Minefield *f) {
 	f->scr->data = NULL;
 }
 
-void screeninit(Minefield *f) {
+static void screeninit(Minefield *f) {
 	screendeinit(f);
 
 	NC *nc = f->scr->data = (NC *) malloc(sizeof(NC));
@@ -52,7 +52,7 @@ void screeninit(Minefield *f) {
 	refresh();
 }
 
-void updatefield(Minefield *f, const char *field) {
+static void updatefield(Minefield *f, const char *field) {
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
 		printf("%s", field);
@@ -64,7 +64,7 @@ void updatefield(Minefield *f, const char *field) {
 	refresh();
 }
 
-void updatetile(Minefield *f, int idx) {
+static void updatetile(Minefield *f, int idx) {
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
 		return;
@@ -77,7 +77,7 @@ void updatetile(Minefield *f, int idx) {
 	wrefresh(w);
 }
 
-void speak(Minefield *f, const char *msg) {
+static void speak(Minefield *f, const char *msg) {
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
 		printf("%s\n", msg);
