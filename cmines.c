@@ -206,7 +206,7 @@ bool simplepress(Minefield *f, int idx) {
 		return 1;
 	}
 	++f->presseds;
-	updatetile(f, idx);
+	f->scr->updatetile(f, idx);
 	checkstate(f);
 	return 1;
 }
@@ -259,7 +259,7 @@ void flag(Minefield *f, int idx) {
 	if (tile->flags & TILE_FLAGGED) return;
 	++f->flaggeds;
 	tile->flags |= TILE_FLAGGED;
-	updatetile(f, idx);
+	f->scr->updatetile(f, idx);
 }
 
 void printfield(Minefield *f) {
@@ -284,7 +284,7 @@ void printfield(Minefield *f) {
 		}
 	}
 	output[(w+1)*h] = '\0';
-	updatefield(f, output);
+	f->scr->updatefield(f, output);
 }
 
 void pressrandom(Minefield *f, bool blanksonly) {
@@ -392,13 +392,16 @@ int main(int argc, char *argv[]) {
 	f.coordinatesets = 0;
 
 	srand(time(NULL) & 0xFFFFFFFF);
+	Screen scr;
+	f.scr = &scr;
+	screen(&scr, &f);
 	alloctiles(&f);
 	do {
 		resettiles(&f);
 		calcmines(&f);
 		setmines(&f);
 		pressrandom(&f, 1);
-		if (f.ncurses && !f.testmode) screeninit(&f);
+		if (f.ncurses && !f.testmode) scr.init(&f);
 		printfield(&f);
 		f.state = STATE_PLAY;
 		Player ply;
@@ -440,10 +443,10 @@ int main(int argc, char *argv[]) {
 		if (f.testmode) {
 			printf("%s", msg);
 		} else {
-			speak(&f, msg);
+			scr.speak(&f, msg);
 		}
 		if (f.sleep && !f.testmode) usleep(800000);
-		screendeinit(&f);
+		scr.deinit(&f);
 		if (f.ncurses && !f.testmode) {
 			f.ncurses = 0;
 			printfield(&f);

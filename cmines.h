@@ -80,6 +80,9 @@ typedef struct {
 
 	/* Testing mode (no UI, keep running) */
 	bool testmode;
+
+	/* Screen functions */
+	struct _Screen *scr;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */

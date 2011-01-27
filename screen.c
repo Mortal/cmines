@@ -4,6 +4,11 @@
 #include "cmines.h"
 #include "screen.h"
 
+typedef struct {
+	WINDOW *field;
+	WINDOW *speak;
+} NC;
+
 void screendeinit(Minefield *f) {
 	if (!f->ncurses || f->testmode || f->ncursesdata == NULL) {
 		return;
@@ -92,4 +97,12 @@ void speak(Minefield *f, const char *msg) {
 	WINDOW *s = nc->speak;
 	wprintw(s, msg);
 	wrefresh(s);
+}
+
+void screen(Screen *s, Minefield *f) {
+	s->init = &screeninit;
+	s->deinit = &screendeinit;
+	s->updatefield = &updatefield;
+	s->updatetile = &updatetile;
+	s->speak = &speak;
 }
