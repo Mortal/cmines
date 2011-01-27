@@ -8,6 +8,7 @@
 #include "Screen.h"
 #include "ncscreen.h"
 #include "dumbscreen.h"
+#include "silentscreen.h"
 #include "ai.h"
 
 char tilechar(Tile *tile) {
@@ -356,6 +357,7 @@ int main(int argc, char *argv[]) {
 	Dimension d = f.dimcount;
 #define SCREEN_DUMB (0)
 #define SCREEN_NCURSES (1)
+#define SCREEN_SILENT (2)
 	int screentype = 0;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -383,6 +385,8 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (!strcmp(arg, "--ncurses")) {
 			screentype = SCREEN_NCURSES;
+		} else if (!strcmp(arg, "--silent")) {
+			screentype = SCREEN_SILENT;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f.sleep = 1;
 		}
@@ -397,6 +401,9 @@ int main(int argc, char *argv[]) {
 	switch (screentype) {
 		case SCREEN_NCURSES:
 			ncscreen(&scr, &f);
+			break;
+		case SCREEN_SILENT:
+			silentscreen(&scr, &f);
 			break;
 		default:
 			dumbscreen(&scr, &f);
