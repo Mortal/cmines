@@ -5,7 +5,8 @@
 #include <time.h>
 #include <unistd.h>
 #include "cmines.h"
-#include "screen.h"
+#include "Screen.h"
+#include "ncscreen.h"
 #include "ai.h"
 
 char tilechar(Tile *tile) {
@@ -394,7 +395,7 @@ int main(int argc, char *argv[]) {
 	srand(time(NULL) & 0xFFFFFFFF);
 	Screen scr;
 	f.scr = &scr;
-	screen(&scr, &f);
+	ncscreen(&scr, &f);
 	alloctiles(&f);
 	do {
 		resettiles(&f);

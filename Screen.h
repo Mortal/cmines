@@ -1,9 +1,6 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include <ncurses.h>
-#include "cmines.h"
-
 typedef void (*scrinit)(Minefield *f);
 typedef void (*scrdeinit)(Minefield *);
 typedef void (*scrupdatefield)(Minefield *, const char *field);
@@ -17,7 +14,5 @@ typedef struct _Screen {
 	scrupdatetile updatetile;
 	scrspeak speak;
 } Screen;
-
-void screen(Screen *, Minefield *);
 
 #endif

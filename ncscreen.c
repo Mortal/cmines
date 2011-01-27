@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include <curses.h>
 #include "cmines.h"
-#include "screen.h"
+#include "Screen.h"
+#include "ncscreen.h"
 
 typedef struct {
 	WINDOW *field;
@@ -99,7 +100,7 @@ void speak(Minefield *f, const char *msg) {
 	wrefresh(s);
 }
 
-void screen(Screen *s, Minefield *f) {
+void ncscreen(Screen *s, Minefield *f) {
 	s->init = &screeninit;
 	s->deinit = &screendeinit;
 	s->updatefield = &updatefield;
