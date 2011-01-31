@@ -331,6 +331,7 @@ int main(int argc, char *argv[]) {
 	f.dimcount = 0;
 	f.automines = 1;
 	f.sleep = 0;
+	f.expect = NULL;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -348,8 +349,8 @@ int main(int argc, char *argv[]) {
 				++f.effectivedimcount;
 			}
 			++f.dimcount;
-		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed")) {
-			// takes a numerical argument, so skip that
+		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed") || !strcmp(arg, "--expect")) {
+			// takes an argument, so skip that
 			++i;
 		}
 	}
@@ -392,6 +393,9 @@ int main(int argc, char *argv[]) {
 				f.seed = seed;
 				hasseed = 1;
 			}
+		} else if (!strcmp(arg, "--expect")) {
+			++i;
+			f.expect = argv[i];
 		} else if (!strcmp(arg, "--ncurses")) {
 			screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "--silent")) {
@@ -465,15 +469,30 @@ int main(int argc, char *argv[]) {
 		if (giveup) break;
 	}
 	const char *msg = "No message";
+	const char *expect = "huh";
 	if (f.state == STATE_PLAY) {
 		msg = "You give up? Too bad!\n";
+		expect = "giveup";
 	} else if (f.state == STATE_LOST) {
 		msg = "Too bad!\n";
+		expect = "loss";
 	} else if (f.state == STATE_WON) {
 		msg = "Congratulations!\n";
+		expect = "win";
 	}
 	scr.speak(&f, msg);
 	if (f.sleep) usleep(800000);
 	scr.deinit(&f);
+	if (f.expect != NULL) {
+		return strcmp(expect, f.expect) ? 1 : 0;
+	}
+	printf("To reproduce:\n%s", argv[0]);
+	{
+		Dimension d;
+		for (d = f.dimcount; d && d--;) {
+			printf(" %d", f.dimensions[d]);
+		}
+	}
+	printf(" --mines %d --seed %d --expect %s\n", f.mines, f.seed, expect);
 	return 0;
 }

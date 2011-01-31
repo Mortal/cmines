@@ -79,6 +79,9 @@ typedef struct _Minefield {
 
 	/* seed passed to srand() before generating the minefield. */
 	unsigned int seed;
+
+	/* expected result (arbitrary string) */
+	const char *expect;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */
