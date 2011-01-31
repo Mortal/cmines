@@ -238,9 +238,20 @@ ACT(act_dualcheck) {
 
 			if (!(b->flags & TILE_PRESSED)) continue;
 
+#ifdef DEBUG
+			bool debug = idx == 55*200+2 && bidx == 55*200+1;
+
+			if (debug) {
+				printtile(f, idx);
+				printtile(f, bidx);
+			}
+#else
+#  define debug (0)
+#endif
+
 			// get b's neighbourhood
 			int bn[f->maxneighbours];
-			neighbourhood(f, idx, (int *) bn);
+			neighbourhood(f, bidx, (int *) bn);
 
 			// get b's bomb neighbour count minus already flagged bombs
 			int bnb = b->neighbours;
@@ -248,17 +259,18 @@ ACT(act_dualcheck) {
 				int i = 0;
 				while (bn[i] != -1) {
 					if (f->tiles[bn[i++]].flags & TILE_FLAGGED) {
+						if (debug) printtile(f, bn[i-1]);
 						--bnb;
 					}
 				}
 			}
 
+			if (debug) printf("A has %d/%d neighbours and B has %d/%d neighbours\n", anb, a->neighbours, bnb, b->neighbours);
+
 			// get b's unknown neighbourhood (unflagged, unpressed)
 			int bnu[f->maxneighbours];
 			{ int *a = bn; int *b = bnu; while ((*b++ = *a++) != -1); }
 			neighbourfilter(f, bnu, &neighbourunknown_cb, NULL);
-
-			if (!issubset(bnu, anu)) continue;
 
 			neighbourfilter(f, bnu, &neighbourdifference_cb, anu);
 
@@ -266,10 +278,10 @@ ACT(act_dualcheck) {
 			if (!count) continue;
 
 			Action act;
-			if (bnb == anb) {
-				act.type = PRESS;
-			} else if (count == bnb-anb) {
+			if (count == bnb-anb) {
 				act.type = FLAG;
+			} else if (issubset(bnu, anu) && bnb == anb) {
+				act.type = PRESS;
 			} else {
 				continue;
 			}
