@@ -45,12 +45,12 @@ static void screeninit(Minefield *f) {
 
 	if (nc->colors) {
 		start_color();
-		init_pair(PAIR_VOID, 0, 0);
-		init_pair(PAIR_WALL, 0, 0);
-		init_pair(PAIR_BOUNDS, 0, 0);
-		init_pair(PAIR_UNKNOWN, 0, 0);
-		init_pair(PAIR_FLAG, 0, 0);
-		init_pair(PAIR_BOMB, 0, 0);
+		init_pair(PAIR_VOID, COLOR_WHITE, COLOR_BLACK);
+		init_pair(PAIR_WALL, COLOR_YELLOW, COLOR_BLACK);
+		init_pair(PAIR_BOUNDS, COLOR_BLUE, COLOR_BLACK);
+		init_pair(PAIR_UNKNOWN, COLOR_CYAN, COLOR_BLACK);
+		init_pair(PAIR_FLAG, COLOR_RED, COLOR_BLACK);
+		init_pair(PAIR_BOMB, COLOR_BLACK, COLOR_RED);
 	}
 
 	int width = f->outputwidth+1;
@@ -85,7 +85,21 @@ static void puttile(Minefield *f, char tile) {
 		return;
 	}
 	WINDOW *w = nc->field;
-	waddch(w, tile);
+	chtype ch = tile;
+	if (tile == '/') {
+		ch |= COLOR_PAIR(PAIR_FLAG);
+	} else if (tile == '.') {
+		ch |= COLOR_PAIR(PAIR_UNKNOWN);
+	} else if (tile == '@') {
+		ch |= COLOR_PAIR(PAIR_BOMB);
+	} else if (tile == '+') {
+		ch |= COLOR_PAIR(PAIR_BOUNDS);
+	} else if (tile == ' ') {
+		ch |= COLOR_PAIR(PAIR_VOID);
+	} else {
+		ch |= COLOR_PAIR(PAIR_WALL);
+	}
+	waddch(w, ch);
 }
 
 static void updatefield(Minefield *f, const char *field) {
