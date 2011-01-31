@@ -335,6 +335,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
 	}
+	bool hasseed = 0;
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -395,7 +396,12 @@ int main(int argc, char *argv[]) {
 	f.tiles = 0;
 	f.coordinatesets = 0;
 
-	srand(time(NULL) & 0xFFFFFFFF);
+	if (!hasseed) {
+		srand(time(NULL) & 0xFFFFFFFF);
+		f.seed = rand();
+	}
+	srand(f.seed);
+
 	Screen scr;
 	f.scr = &scr;
 	switch (screentype) {
@@ -415,6 +421,11 @@ int main(int argc, char *argv[]) {
 	setmines(&f);
 	pressrandom(&f, 1);
 	scr.init(&f);
+	{
+		char seedmsg[256];
+		sprintf(seedmsg, "Seed: %u\n", f.seed);
+		scr.speak(&f, seedmsg);
+	}
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;

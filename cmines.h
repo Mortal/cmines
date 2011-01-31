@@ -76,6 +76,9 @@ typedef struct _Minefield {
 
 	/* Screen functions */
 	struct _Screen *scr;
+
+	/* seed passed to srand() before generating the minefield. */
+	unsigned int seed;
 } Minefield;
 
 /* Get the column and row of the tile in the terminal/ncurses output. */
