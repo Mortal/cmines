@@ -348,8 +348,8 @@ int main(int argc, char *argv[]) {
 				++f.effectivedimcount;
 			}
 			++f.dimcount;
-		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
-			// --mines takes a numerical argument, so skip that
+		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed")) {
+			// takes a numerical argument, so skip that
 			++i;
 		}
 	}
@@ -383,6 +383,14 @@ int main(int argc, char *argv[]) {
 				}
 				f.mines = mines;
 				f.automines = 0;
+			}
+		} else if (!strcmp(arg, "--seed")) {
+			++i;
+			const char *arg2 = argv[i];
+			if (isnumber(arg2)) {
+				int seed = strtol(arg2, NULL, 0);
+				f.seed = seed;
+				hasseed = 1;
 			}
 		} else if (!strcmp(arg, "--ncurses")) {
 			screentype = SCREEN_NCURSES;
