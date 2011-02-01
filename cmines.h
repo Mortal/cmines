@@ -1,35 +1,9 @@
 #ifndef CMINES_H
 #define CMINES_H
 
-#ifndef TRUE
-	#define TRUE (1)
-#endif
-#ifndef FALSE
-	#define FALSE (0)
-#endif
-
-typedef unsigned int Coordinate;
-typedef unsigned int Dimension;
-#ifndef bool
-	typedef char bool;
-#endif
-
-#define TILE_MINE 0x1
-#define TILE_PRESSED 0x2
-#define TILE_FLAGGED 0x4
-typedef struct {
-	int flags;
-	int neighbours;
-} Tile;
+#include "types.h"
 
 char tilechar(Tile *tile);
-
-enum FieldState {
-	STATE_INIT,
-	STATE_PLAY,
-	STATE_WON,
-	STATE_LOST
-};
 
 typedef struct _Minefield {
 	/* Field dimensions, most significant dimension first.

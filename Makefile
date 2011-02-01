@@ -16,6 +16,6 @@ ncplayer.o: ncplayer.c ncplayer.h cmines.h Player.h
 ncscreen.o: ncscreen.c ncscreen.h cmines.h Screen.h
 dumbscreen.o: dumbscreen.c cmines.h dumbscreen.h Screen.h
 silentscreen.o: silentscreen.c cmines.h silentscreen.h Screen.h
-cmines.o: cmines.c cmines.h ncscreen.h dumbscreen.h silentscreen.h ncplayer.h Player.h Screen.h ai.h
+cmines.o: cmines.c cmines.h types.h ncscreen.h dumbscreen.h silentscreen.h ncplayer.h Player.h Screen.h ai.h
 
 # DO NOT DELETE
