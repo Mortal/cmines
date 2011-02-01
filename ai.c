@@ -6,124 +6,6 @@
 bool allowcoordreset = 0;
 int nexttileidx_ = 0;
 
-/* what follows is a binary search tree implementation based on Cormen et al,
- * Introduction to algorithms 2nd ed */
-
-typedef struct _neighbournode {
-	int idx;
-	struct _neighbournode *left;
-	struct _neighbournode *right;
-	struct _neighbournode *parent;
-} neighbournode;
-
-int amount = 0;
-
-static void neighbourtreeinsert(neighbournode *x, int idx) {
-	//printf("(%d) Insert %d in tree rooted by %d\n", amount, idx, x->idx);
-	neighbournode *y = NULL;
-	while (x != NULL) {
-		y = x;
-		if (idx < x->idx) {
-			x = x->left;
-		} else {
-			x = x->right;
-		}
-	}
-	if (y == NULL) {
-		x->idx = idx;
-		x->left = x->right = x->parent = NULL;
-	} else {
-		neighbournode *insert = (neighbournode *) malloc(sizeof(neighbournode));
-		++amount;
-		insert->idx = idx;
-		insert->parent = y;
-		insert->left = insert->right = NULL;
-		if (idx < y->idx) {
-			y->left = insert;
-		} else {
-			y->right = insert;
-		}
-	}
-}
-
-/*
-static neighbournode *neighbourtreeminimum(neighbournode *node) {
-	while (1) {
-		neighbournode *left = node->left;
-		if (left == NULL) break;
-		node = left;
-	}
-	return node;
-}
-
-static neighbournode *neighbourtreesuccessor(neighbournode *node) {
-	if (node->right != NULL) return neighbourtreeminimum(node->right);
-	neighbournode *y = node->parent;
-	while (y != NULL && x == y->right) {
-		node = y;
-		y = y->parent;
-	}
-	return y;
-}
-
-static void neighbourtreedelete(neighbournode *node) {
-	neighbournode *x;
-	neighbournode *y;
-	if (node->left == NULL || node->right == NULL) {
-		y = node;
-	} else {
-		y = neighbourtreesuccessor(node);
-	}
-	if (y->left != NULL) {
-		x = y->left;
-	} else {
-		x = y->right;
-	}
-	if (x != NULL) {
-		x->parent = y->parent;
-	}
-	if (y->parent == NULL) {
-		y->idx = x->idx;
-}
-*/
-
-static neighbournode *makeneighbourtree(int *neighbours) {
-	neighbournode *root = (neighbournode *) malloc(sizeof(neighbournode));
-	root->left = root->right = root->parent = NULL;
-	++amount;
-	int i; int insert;
-	for (i = 0, insert = neighbours[i]; insert != -1; ++i, insert = neighbours[i]) {
-		if (i == 0) {
-			root->idx = insert;
-		} else {
-			neighbourtreeinsert(root, insert);
-		}
-	}
-	return root;
-}
-
-static void neighbourtree_free(neighbournode *root) {
-	if (root == NULL) return;
-	neighbourtree_free(root->left);
-	neighbourtree_free(root->right);
-	//printf("(%d) Free %d\n", --amount, root->idx);
-	free(root);
-}
-
-static neighbournode *neighbourtree_find(neighbournode *root, int idx) {
-	while (root != NULL) {
-		int found = root->idx;
-		if (found == idx) {
-			return root;
-		} else if (idx < found) {
-			root = root->left;
-		} else {
-			root = root->right;
-		}
-	}
-	return NULL;
-}
-
 static void giveup(Action *act) {
 	act->type = GIVEUP;
 }
@@ -173,9 +55,14 @@ static void neighbourfilter(Minefield *f, int *c, neighbourcount_cb cb, void *cb
 }
 
 #define CB(fun) static bool fun(Minefield *f, Tile *tile, int idx, void *payload)
-/*
 CB(neighbourunpressed_cb) {
 	return !(tile->flags & TILE_PRESSED);
+}
+CB(neighbourunknown_cb) {
+	return !(tile->flags & (TILE_PRESSED|TILE_FLAGGED));
+}
+CB(neighbourflags_cb) {
+	return !!(tile->flags & TILE_FLAGGED);
 }
 CB(neighbournoflags_cb) {
 	return !(tile->flags & TILE_FLAGGED);
@@ -183,24 +70,20 @@ CB(neighbournoflags_cb) {
 CB(neighbourneighbour_cb) {
 	return (tile->flags & TILE_PRESSED) && (tile->neighbours > 0);
 }
-*/
-CB(neighbourunknown_cb) {
-	return !(tile->flags & (TILE_PRESSED|TILE_FLAGGED));
-}
-CB(neighbourflags_cb) {
-	return !!(tile->flags & TILE_FLAGGED);
-}
 CB(neighbourdifference_cb) {
-	neighbournode *set = (neighbournode *) payload;
-	if (NULL == neighbourtree_find(set, idx)) return 1;
-	return 0;
+	int i = 0;
+	int *set = (int *) payload;
+	while (set[i] != -1) {
+		if (set[i] == idx) return 0;
+		++i;
+	}
+	return 1;
 }
 #undef CB
 
 #define ACT(method) static Action **method(Minefield *f, int idx)
 #define GETTILE(tile) Tile *tile = &f->tiles[idx]
 
-/*
 ACT(act_dumb) {
 	GETTILE(tile);
 	if (tile->flags & (TILE_PRESSED|TILE_FLAGGED)) return NULL;
@@ -217,7 +100,6 @@ ACT(act_dumb) {
 
 	return res;
 }
-*/
 
 ACT(act_singleflagging) {
 	GETTILE(tile);
@@ -277,9 +159,20 @@ ACT(act_safespots) {
 	return ret;
 }
 
-static bool issubset(neighbournode *superset, int *subset) {
+static bool issubset(int *superset, int *subset) {
 	while (*subset != -1) {
-		if (NULL == neighbourtree_find(superset, *subset)) return 0;
+		bool exists = 0;
+		int *p = superset;
+		while (*p != -1) {
+			if (*p == *subset) {
+				exists = 1;
+				break;
+			}
+			++p;
+		}
+		if (!exists) {
+			return 0;
+		}
 		++subset;
 	}
 	return 1;
@@ -337,9 +230,6 @@ ACT(act_dualcheck) {
 	{ int *a = an; int *b = anu; while ((*b++ = *a++) != -1); }
 	neighbourfilter(f, anu, &neighbourunknown_cb, NULL);
 
-	neighbournode *anut = makeneighbourtree(anu);
-
-	Action **res = NULL;
 	{
 		int i = 0;
 		while (an[i] != -1) {
@@ -382,9 +272,7 @@ ACT(act_dualcheck) {
 			{ int *a = bn; int *b = bnu; while ((*b++ = *a++) != -1); }
 			neighbourfilter(f, bnu, &neighbourunknown_cb, NULL);
 
-			neighbourfilter(f, bnu, &neighbourdifference_cb, anut);
-
-			neighbournode *bnut = makeneighbourtree(bnu);
+			neighbourfilter(f, bnu, &neighbourdifference_cb, anu);
 
 			int count = 0; while (bnu[count] != -1) ++count;
 			if (!count) continue;
@@ -392,14 +280,12 @@ ACT(act_dualcheck) {
 			Action act;
 			if (count == bnb-anb) {
 				act.type = FLAG;
-			} else if (issubset(bnut, anu) && bnb == anb) {
+			} else if (issubset(bnu, anu) && bnb == anb) {
 				act.type = PRESS;
 			} else {
-				neighbourtree_free(bnut);
 				continue;
 			}
-			neighbourtree_free(bnut);
-			res = (Action **) malloc(sizeof(Action *)*(count+1));
+			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
 			int i = 0;
 			while (bnu[i] != -1) {
 				act.tileidx = bnu[i];
@@ -408,11 +294,10 @@ ACT(act_dualcheck) {
 				i++;
 			}
 			res[i] = NULL;
-			break;
+			return res;
 		}
 	}
-	neighbourtree_free(anut);
-	return res;
+	return NULL;
 }
 #undef GETTILE
 #undef ACT
