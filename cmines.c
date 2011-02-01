@@ -131,7 +131,9 @@ void neighbourhood(Minefield *f, unsigned int root, int *neighbours) {
 			}
 		}
 	}
-	neighbours[idx] = -1;
+	for (; idx < f->maxneighbours; ++idx) {
+		neighbours[idx] = -1;
+	}
 }
 
 void resettiles(Minefield *f) {
@@ -161,7 +163,7 @@ void setmines(Minefield *f) {
 		int neighbours[f->maxneighbours];
 		neighbourhood(f, idx, (int *) neighbours);
 		for (j = 0; j < f->maxneighbours; ++j) {
-			if (-1 == neighbours[j]) break;
+			if (-1 == neighbours[j]) continue;
 			++f->tiles[neighbours[j]].neighbours;
 		}
 	}
@@ -178,7 +180,7 @@ void recalcneighbours(Minefield *f) {
 		neighbourhood(f, i, (int *) neighbours);
 		int j;
 		for (j = 0; j < f->maxneighbours; ++j) {
-			if (-1 == neighbours[j]) break;
+			if (-1 == neighbours[j]) continue;
 			++f->tiles[neighbours[j]].neighbours;
 		}
 	}
@@ -213,6 +215,7 @@ int ripple_pop(PressRipple *r) {
 }
 
 bool simplepress(Minefield *f, int idx) {
+	assert(idx >= 0 && idx <= f->tilecount);
 	Tile *tile = &f->tiles[idx];
 	if (tile->flags & TILE_PRESSED) return 0;
 	assert(!(tile->flags & TILE_PRESSED));
@@ -240,7 +243,8 @@ void ripplepress(Minefield *f, PressRipple *r) {
 	int neighbours[f->maxneighbours];
 	neighbourhood(f, idx, (int *) neighbours);
 	int i;
-	for (i = 0; !r->overflow && i < f->maxneighbours && neighbours[i] != -1; ++i) {
+	for (i = 0; !r->overflow && i < f->maxneighbours; ++i) {
+		if (neighbours[i] == -1) continue;
 		ripple_push(r, neighbours[i]);
 	}
 }
@@ -254,13 +258,15 @@ static void handlepressoverflow(Minefield *f) {
 		int neighbours[f->maxneighbours];
 		neighbourhood(f, idx, (int *) neighbours);
 		int i;
-		for (i = 0; i < f->maxneighbours && neighbours[i] != -1; ++i) {
+		for (i = 0; i < f->maxneighbours; ++i) {
+			if (neighbours[i] == -1) continue;
 			if (simplepress(f, neighbours[i])) allowreset = 1;
 		}
 	}
 }
 
 void press(Minefield *f, int idx) {
+	assert(idx >= 0 && idx <= f->tilecount);
 	PressRipple r;
 	int length = 1024;
 	int positions[length];
