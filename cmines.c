@@ -355,6 +355,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	bool hasseed = 0;
+	bool ai = 1;
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -418,6 +419,8 @@ int main(int argc, char *argv[]) {
 			screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "--silent")) {
 			screentype = SCREEN_SILENT;
+		} else if (!strcmp(arg, "--manual")) {
+			ai = 0;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f.sleep = 1;
 		}
@@ -459,7 +462,11 @@ int main(int argc, char *argv[]) {
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;
-	NCPlayer(&ply, &f);
+	if (ai) {
+		AI(&ply, &f);
+	} else {
+		NCPlayer(&ply, &f);
+	}
 	ply.initfun(&ply, &f);
 	time_t lastprint = 0;
 	while (f.state == STATE_PLAY) {
