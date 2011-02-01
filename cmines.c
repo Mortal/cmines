@@ -442,7 +442,7 @@ int main(int argc, char *argv[]) {
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;
-	NCPlayer(&ply, &f);
+	AI(&ply, &f);
 	ply.initfun(&ply, &f);
 	time_t lastprint = 0;
 	while (f.state == STATE_PLAY) {
