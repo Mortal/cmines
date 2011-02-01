@@ -167,6 +167,23 @@ void setmines(Minefield *f) {
 	}
 }
 
+void recalcneighbours(Minefield *f) {
+	int i;
+	for (i = 0; i < f->mines; ++i) {
+		f->tiles[i].neighbours = 0;
+	}
+	for (i = 0; i < f->mines; ++i) {
+		if (!(f->tiles[i].flags & TILE_MINE)) continue;
+		int neighbours[f->maxneighbours];
+		neighbourhood(f, i, (int *) neighbours);
+		int j;
+		for (j = 0; j < f->maxneighbours; ++j) {
+			if (-1 == neighbours[j]) break;
+			++f->tiles[neighbours[j]].neighbours;
+		}
+	}
+}
+
 void checkstate(Minefield *f) {
 	if (f->mines+f->presseds >= f->tilecount) {
 		f->state = STATE_WON;
@@ -442,7 +459,7 @@ int main(int argc, char *argv[]) {
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;
-	AI(&ply, &f);
+	NCPlayer(&ply, &f);
 	ply.initfun(&ply, &f);
 	time_t lastprint = 0;
 	while (f.state == STATE_PLAY) {

@@ -1,3 +1,4 @@
+#include "types.h"
 #include "ncplayer.h"
 #include "ncscreen.h"
 #include <ncurses.h>
@@ -40,6 +41,10 @@ static Action **ncact(Player *p, Minefield *f) {
 			act->type = PRESS;
 			act->tileidx = d->cursidx;
 			return res;
+		} else if (ch == 'z') {
+			f->tiles[d->cursidx].flags ^= TILE_MINE;
+			recalcneighbours(f);
+			printfield(f);
 		} else {
 			int i;
 			for (i = 0; inckeys[i] != '\0' && deckeys[i] != '\0' && i < f->dimcount; ++i) {

@@ -81,6 +81,7 @@ void alloctiles(Minefield *);
 void resettiles(Minefield *);
 void calcmines(Minefield *);
 void setmines(Minefield *);
+void recalcneighbours(Minefield *);
 void printfield(Minefield *);
 
 #endif
