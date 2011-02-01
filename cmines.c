@@ -169,10 +169,10 @@ void setmines(Minefield *f) {
 
 void recalcneighbours(Minefield *f) {
 	int i;
-	for (i = 0; i < f->mines; ++i) {
+	for (i = 0; i < f->tilecount; ++i) {
 		f->tiles[i].neighbours = 0;
 	}
-	for (i = 0; i < f->mines; ++i) {
+	for (i = 0; i < f->tilecount; ++i) {
 		if (!(f->tiles[i].flags & TILE_MINE)) continue;
 		int neighbours[f->maxneighbours];
 		neighbourhood(f, i, (int *) neighbours);
