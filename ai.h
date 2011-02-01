@@ -3,6 +3,6 @@
 #include "cmines.h"
 #include "Player.h"
 
-void AI(Player *ply);
+void AI(Player *, Minefield *);
 
 #endif

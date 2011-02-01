@@ -302,7 +302,7 @@ ACT(act_dualcheck) {
 #undef GETTILE
 #undef ACT
 
-static Action **act(Minefield *f) {
+static Action **act(Player *p, Minefield *f) {
 #define ACT(method) {Action **ret = method(f, idx); if (ret != NULL) {allowcoordreset = 1; return ret;}}
 	while (hasnexttile(f)) {
 		int idx = nexttileidx(f);
@@ -322,7 +322,7 @@ static Action **act(Minefield *f) {
 #undef ACT
 }
 
-static void actfree(Action **act) {
+static void actfree(Player *p, Action **act) {
 	int i = 0;
 	while (act[i] != NULL) {
 		free(act[i++]);
@@ -330,8 +330,14 @@ static void actfree(Action **act) {
 	free(act);
 }
 
-void AI(Player *ply) {
-	Player ai = {&act, &actfree};
+static void aiinit(Player *p, Minefield *f) {
+}
+
+static void aideinit(Player *p, Minefield *f) {
+}
+
+void AI(Player *ply, Minefield *f) {
+	Player ai = {&aiinit, &aideinit, &act, &actfree, NULL};
 	*ply = ai;
 	allowcoordreset = 0;
 	nexttileidx_ = 0;

@@ -18,11 +18,7 @@
 /* pressed bombs */
 #define PAIR_BOMB (6)
 
-typedef struct {
-	WINDOW *field;
-	WINDOW *speak;
-	bool colors;
-} NC;
+typedef struct NCscreen NC;
 
 static void screendeinit(Minefield *f) {
 	if (f->scr->data == NULL) return;

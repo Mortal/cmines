@@ -5,6 +5,12 @@
 #include "cmines.h"
 #include "Screen.h"
 
+struct NCscreen {
+	WINDOW *field;
+	WINDOW *speak;
+	bool colors;
+};
+
 void ncscreen(Screen *, Minefield *);
 
 #endif

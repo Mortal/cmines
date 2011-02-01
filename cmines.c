@@ -10,6 +10,7 @@
 #include "dumbscreen.h"
 #include "silentscreen.h"
 #include "ai.h"
+#include "ncplayer.h"
 
 char tilechar(Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';
@@ -441,10 +442,11 @@ int main(int argc, char *argv[]) {
 	printfield(&f);
 	f.state = STATE_PLAY;
 	Player ply;
-	AI(&ply);
+	NCPlayer(&ply, &f);
+	ply.initfun(&ply, &f);
 	time_t lastprint = 0;
 	while (f.state == STATE_PLAY) {
-		Action **act = (*ply.actfun)(&f);
+		Action **act = (*ply.actfun)(&ply, &f);
 		bool giveup = 0;
 		int i = 0;
 		while (act[i] != NULL) {
@@ -465,7 +467,7 @@ int main(int argc, char *argv[]) {
 			lastprint = now;
 			printfield(&f);
 		}
-		(*ply.freefun)(act);
+		(*ply.freefun)(&ply, act);
 		if (giveup) break;
 	}
 	const char *msg = "No message";
@@ -480,6 +482,7 @@ int main(int argc, char *argv[]) {
 		msg = "Congratulations!\n";
 		expect = "win";
 	}
+	ply.deinitfun(&ply, &f);
 	scr.speak(&f, msg);
 	if (f.sleep) usleep(800000);
 	scr.deinit(&f);
