@@ -25,10 +25,11 @@ static int nexttileidx(Minefield *f) {
 typedef bool (*neighbourcount_cb)(Minefield *f, Tile *tile, int idx, void *payload);
 
 static int neighbourcount(Minefield *f, int *neighbours, neighbourcount_cb cb, void *cbpayload) {
-	int i = 0;
+	int i;
 	int matches = 0;
-	while (neighbours[i] != -1) {
-		int idx = neighbours[i++];
+	for (i = 0; i < f->maxneighbours; ++i) {
+		int idx = neighbours[i];
+		if (idx == -1) continue;
 		Tile *tile = &f->tiles[idx];
 		if ((*cb)(f, tile, idx, cbpayload)) {
 			++matches;
@@ -38,20 +39,22 @@ static int neighbourcount(Minefield *f, int *neighbours, neighbourcount_cb cb, v
 }
 
 static void neighbourfilter(Minefield *f, int *c, neighbourcount_cb cb, void *cbpayload) {
-	int *dest = c;
-	int i = 0;
-	while (c[i] != -1) {
+	int dest = 0;
+	int i;
+	for (i = 0; i < f->maxneighbours; ++i) {
 		int idx = c[i];
+		if (idx == -1) continue;
 		Tile *tile = &f->tiles[idx];
 		if ((*cb)(f, tile, idx, cbpayload)) {
-			if (&c[i] != dest) {
-				*dest = c[i];
+			if (i != dest) {
+				c[dest] = c[i];
 			}
 			++dest;
 		}
-		i++;
 	}
-	*dest = -1;
+	while (dest < f->maxneighbours) {
+		c[dest++] = -1;
+	}
 }
 
 #define CB(fun) static bool fun(Minefield *f, Tile *tile, int idx, void *payload)
@@ -71,11 +74,10 @@ CB(neighbourneighbour_cb) {
 	return (tile->flags & TILE_PRESSED) && (tile->neighbours > 0);
 }
 CB(neighbourdifference_cb) {
-	int i = 0;
+	int i;
 	int *set = (int *) payload;
-	while (set[i] != -1) {
+	for (i = 0; i < f->maxneighbours; ++i) {
 		if (set[i] == idx) return 0;
-		++i;
 	}
 	return 1;
 }
@@ -115,8 +117,9 @@ ACT(act_singleflagging) {
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
 	int retidx = 0;
 	int i = 0;
-	while (neighbours[i] != -1) {
-		int idx = neighbours[i++];
+	for (i = 0; i < f->maxneighbours; ++i) {
+		int idx = neighbours[i];
+		if (idx == -1) continue;
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			Action act;
@@ -143,9 +146,10 @@ ACT(act_safespots) {
 
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
 	int retidx = 0;
-	int i = 0;
-	while (neighbours[i] != -1) {
-		int idx = neighbours[i++];
+	int i;
+	for (i = 0; i < f->maxneighbours; ++i) {
+		int idx = neighbours[i];
+		if (idx == -1) continue;
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			Action act;
@@ -159,21 +163,22 @@ ACT(act_safespots) {
 	return ret;
 }
 
-static bool issubset(int *superset, int *subset) {
-	while (*subset != -1) {
+static bool issubset(int *superset, int *subset, int length) {
+	int i;
+	for (i = 0; i < length; ++i) {
+		if (subset[i] == -1) continue;
 		bool exists = 0;
-		int *p = superset;
-		while (*p != -1) {
-			if (*p == *subset) {
+		int j = 0;
+		for (j = 0; j < length; ++j) {
+			if (superset[j] == -1) continue;
+			if (superset[j] == subset[i]) {
 				exists = 1;
 				break;
 			}
-			++p;
 		}
 		if (!exists) {
 			return 0;
 		}
-		++subset;
 	}
 	return 1;
 }
@@ -192,9 +197,12 @@ void printtile(Minefield *f, int idx) {
 
 void printtiles(Minefield *f, int *tiles) {
 	int count = 0;
-	while (tiles[count] != -1) {
-		int idx = tiles[count++];
+	int i;
+	for (i = 0; i < f->maxneighbours; ++i) {
+		if (tiles[i] == -1) continue;
+		int idx = tiles[i];
 		printtile(f, idx);
+		++count;
 	}
 	printf("%d tiles\n", count);
 }
@@ -217,9 +225,10 @@ ACT(act_dualcheck) {
 	// get a's bomb neighbour count minus already flagged bombs
 	int anb = a->neighbours;
 	{
-		int i = 0;
-		while (an[i] != -1) {
-			if (f->tiles[an[i++]].flags & TILE_FLAGGED) {
+		int i;
+		for (i = 0; i < f->maxneighbours; ++i) {
+			if (an[i] == -1) continue;
+			if (f->tiles[an[i]].flags & TILE_FLAGGED) {
 				--anb;
 			}
 		}
@@ -227,13 +236,19 @@ ACT(act_dualcheck) {
 
 	// get a's unknown neighbourhood (unflagged, unpressed)
 	int anu[f->maxneighbours];
-	{ int *a = an; int *b = anu; while ((*b++ = *a++) != -1); }
+	{
+		int i;
+		for (i = 0; i < f->maxneighbours; ++i) {
+			anu[i] = an[i];
+		}
+	}
 	neighbourfilter(f, anu, &neighbourunknown_cb, NULL);
 
 	{
-		int i = 0;
-		while (an[i] != -1) {
-			int bidx = an[i++];
+		int i;
+		for (i = 0; i < f->maxneighbours; ++i) {
+			int bidx = an[i];
+			if (bidx == -1) continue;
 			Tile *b = &f->tiles[bidx];
 
 			if (!(b->flags & TILE_PRESSED)) continue;
@@ -256,10 +271,11 @@ ACT(act_dualcheck) {
 			// get b's bomb neighbour count minus already flagged bombs
 			int bnb = b->neighbours;
 			{
-				int i = 0;
-				while (bn[i] != -1) {
-					if (f->tiles[bn[i++]].flags & TILE_FLAGGED) {
-						if (debug) printtile(f, bn[i-1]);
+				int i;
+				for (i = 0; i < f->maxneighbours; ++i) {
+					if (bn[i] == -1) continue;
+					if (f->tiles[bn[i]].flags & TILE_FLAGGED) {
+						//if (debug) printtile(f, bn[i-1]);
 						--bnb;
 					}
 				}
@@ -269,31 +285,43 @@ ACT(act_dualcheck) {
 
 			// get b's unknown neighbourhood (unflagged, unpressed)
 			int bnu[f->maxneighbours];
-			{ int *a = bn; int *b = bnu; while ((*b++ = *a++) != -1); }
+			{
+				int i;
+				for (i = 0; i < f->maxneighbours; ++i) {
+					bnu[i] = bn[i];
+				}
+			}
 			neighbourfilter(f, bnu, &neighbourunknown_cb, NULL);
 
 			neighbourfilter(f, bnu, &neighbourdifference_cb, anu);
 
-			int count = 0; while (bnu[count] != -1) ++count;
+			int count = 0;
+			{
+				int i;
+				for (i = 0; i < f->maxneighbours; ++i) {
+					if (bnu[i] != -1) ++count;
+				}
+			}
 			if (!count) continue;
 
 			Action act;
 			if (count == bnb-anb) {
 				act.type = FLAG;
-			} else if (issubset(bnu, anu) && bnb == anb) {
+			} else if (issubset(bnu, anu, f->maxneighbours) && bnb == anb) {
 				act.type = PRESS;
 			} else {
 				continue;
 			}
 			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
-			int i = 0;
-			while (bnu[i] != -1) {
+			int i, j = 0;
+			for (i = 0; i < f->maxneighbours; ++i) {
 				act.tileidx = bnu[i];
-				res[i] = (Action *) malloc(sizeof(Action));
-				*res[i] = act;
-				i++;
+				if (act.tileidx == -1) continue;
+				res[j] = (Action *) malloc(sizeof(Action));
+				*res[j] = act;
+				j++;
 			}
-			res[i] = NULL;
+			res[j] = NULL;
 			return res;
 		}
 	}
