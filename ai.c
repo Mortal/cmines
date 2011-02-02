@@ -74,12 +74,33 @@ CB(neighbourneighbour_cb) {
 	return (tile->flags & TILE_PRESSED) && (tile->neighbours > 0);
 }
 CB(neighbourdifference_cb) {
-	int i;
+	int i = f->maxneighbours/2;
 	int *set = (int *) payload;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		if (set[i] == idx) return 0;
+	int foundhigh = f->maxneighbours, foundlow = -1;
+	while (1) {
+		int cur = set[i];
+		if (cur == -1) {
+			int j = i;
+			while (1) {
+				++i;
+				if (i < foundhigh && set[i] != -1) break;
+				--j;
+				if (j > foundlow && set[j] != -1) {
+					i = j;
+					break;
+				}
+				if (i >= foundhigh && j <= foundlow) {
+					return 1;
+				}
+			}
+			cur = set[i];
+		}
+		if (cur == idx) return 0;
+		if (foundhigh-foundlow < 2) return 1;
+		if (cur < idx) { foundlow = i; }
+		else if (cur > idx) { foundhigh = i; }
+		i = (foundlow+foundhigh)/2;
 	}
-	return 1;
 }
 #undef CB
 
