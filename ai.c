@@ -304,15 +304,25 @@ static Action **act(Player *p, Minefield *f) {
 		return ret;\
 	}\
 }
+	// first, try the simple calculation on all tiles. act_singlecheck only calls
+	// neighbourhood() once and some counting functions per call.
 	while (hasnexttile(f)) {
 		int idx = nexttileidx(f);
 		ACT(act_singlecheck);
 	}
+	// once we've exhausted the playing field (run through from top to bottom
+	// with no match), allowcoordreset is set to 0. reset it to 1 and try again
+	// with the complex algorithm. act_dualcheck calls neighbourhood() once for
+	// each tile and once again for each tile's pressed neighbours. this is a
+	// slow operation! if we have a match, return it. next time, start over with
+	// simple calculations.
 	allowcoordreset = 1;
 	while (hasnexttile(f)) {
 		int idx = nexttileidx(f);
 		ACT(act_dualcheck);
 	}
+	// we've exhausted the playing field twice now. we give up since the board is
+	// ambiguous.
 	Action **res = (Action **) malloc(sizeof(Action *)*2);
 	res[0] = (Action *) malloc(sizeof(Action));
 	giveup(res[0]);
