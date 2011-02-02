@@ -22,87 +22,67 @@ static int nexttileidx(Minefield *f) {
 	return nexttileidx_ = 0;
 }
 
-typedef bool (*neighbourcount_cb)(Minefield *f, Tile *tile, int idx, void *payload);
-
-static int neighbourcount(Minefield *f, int *neighbours, neighbourcount_cb cb, void *cbpayload) {
-	int i;
-	int matches = 0;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		int idx = neighbours[i];
-		if (idx == -1) continue;
-		Tile *tile = &f->tiles[idx];
-		if ((*cb)(f, tile, idx, cbpayload)) {
-			++matches;
-		}
-	}
-	return matches;
+#define COUNTER(fun, cb) \
+static int fun(Minefield *f, int *neighbours) {\
+	int i;\
+	int matches = 0;\
+	for (i = 0; i < f->maxneighbours; ++i) {\
+		int idx = neighbours[i];\
+		if (idx == -1) continue;\
+		Tile *tile = &f->tiles[idx];\
+		if (cb) {\
+			++matches;\
+		}\
+	}\
+	return matches;\
 }
 
-static void neighbourfilter(Minefield *f, int *c, neighbourcount_cb cb, void *cbpayload) {
-	int dest = 0;
-	int i;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		int idx = c[i];
-		if (idx == -1) continue;
-		Tile *tile = &f->tiles[idx];
-		if ((*cb)(f, tile, idx, cbpayload)) {
-			if (i != dest) {
-				c[dest] = c[i];
-			}
-			++dest;
-		}
-	}
-	while (dest < f->maxneighbours) {
-		c[dest++] = -1;
-	}
+#define FILTER(fun, cb) \
+static void fun(Minefield *f, int *c) {\
+	int dest = 0;\
+	int i;\
+	for (i = 0; i < f->maxneighbours; ++i) {\
+		int idx = c[i];\
+		if (idx == -1) continue;\
+		Tile *tile = &f->tiles[idx];\
+		if (cb) {\
+			if (i != dest) {\
+				c[dest] = c[i];\
+			}\
+			++dest;\
+		}\
+	}\
+	while (dest < f->maxneighbours) {\
+		c[dest++] = -1;\
+	}\
 }
 
-#define CB(fun) static bool fun(Minefield *f, Tile *tile, int idx, void *payload)
-CB(neighbourunpressed_cb) {
-	return !(tile->flags & TILE_PRESSED);
-}
-CB(neighbourunknown_cb) {
-	return !(tile->flags & (TILE_PRESSED|TILE_FLAGGED));
-}
-CB(neighbourflags_cb) {
-	return !!(tile->flags & TILE_FLAGGED);
-}
-CB(neighbournoflags_cb) {
-	return !(tile->flags & TILE_FLAGGED);
-}
-CB(neighbourneighbour_cb) {
-	return (tile->flags & TILE_PRESSED) && (tile->neighbours > 0);
-}
-CB(neighbourdifference_cb) {
-	int i = f->maxneighbours/2;
-	int *set = (int *) payload;
-	int foundhigh = f->maxneighbours, foundlow = -1;
-	while (1) {
-		int cur = set[i];
-		if (cur == -1) {
-			int j = i;
-			while (1) {
-				++i;
-				if (i < foundhigh && set[i] != -1) break;
-				--j;
-				if (j > foundlow && set[j] != -1) {
-					i = j;
-					break;
-				}
-				if (i >= foundhigh && j <= foundlow) {
-					return 1;
-				}
-			}
-			cur = set[i];
-		}
-		if (cur == idx) return 0;
-		if (foundhigh-foundlow < 2) return 1;
-		if (cur < idx) { foundlow = i; }
-		else if (cur > idx) { foundhigh = i; }
-		i = (foundlow+foundhigh)/2;
-	}
-}
+FILTER(neighbourunpressed, !(tile->flags & TILE_PRESSED))
+FILTER(filterunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
+COUNTER(countunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
+COUNTER(countflags, !!(tile->flags & TILE_FLAGGED))
+FILTER(neighbournoflags, !(tile->flags & TILE_FLAGGED))
+FILTER(neighbourneighbour, (tile->flags & TILE_PRESSED) && (tile->neighbours > 0))
 #undef CB
+
+static void neighbourdifference(Minefield *f, int *c, int *set) {
+	int i, j, k; /* i is read-index in c, j is write-index is c, k is read-index in set */
+	int length = f->maxneighbours;
+	for (i = 0, j = 0, k = 0; i < length; ++i) {
+		int tofind = c[i];
+		if (tofind == -1) continue;
+		while (k < length && set[k] < tofind) ++k;
+		if (set[k] == tofind) continue;
+		if (i != j) {
+			c[j] = c[i];
+		}
+		++j;
+	}
+	while (j < length) {
+		c[j] = -1;
+		++j;
+	}
+}
 
 #define ACT(method) static Action **method(Minefield *f, int idx)
 #define GETTILE(tile) Tile *tile = &f->tiles[idx]
@@ -130,9 +110,9 @@ ACT(act_singleflagging) {
 	if (!tile->neighbours) return NULL;
 	int neighbours[f->maxneighbours];
 	neighbourhood(f, idx, (int *) neighbours);
-	int neighbourunknown = neighbourcount(f, (int *) neighbours, &neighbourunknown_cb, NULL);
+	int neighbourunknown = countunknown(f, (int *) neighbours);
 	if (!neighbourunknown) return NULL;
-	int neighbourflags = neighbourcount(f, (int *) neighbours, &neighbourflags_cb, NULL);
+	int neighbourflags = countflags(f, (int *) neighbours);
 	if (tile->neighbours != neighbourunknown + neighbourflags) return NULL;
 
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
@@ -160,9 +140,9 @@ ACT(act_safespots) {
 	if (!tile->neighbours) return NULL;
 	int neighbours[f->maxneighbours];
 	neighbourhood(f, idx, (int *) neighbours);
-	int neighbourunknown = neighbourcount(f, (int *) neighbours, &neighbourunknown_cb, NULL);
+	int neighbourunknown = countunknown(f, neighbours);
 	if (!neighbourunknown) return NULL;
-	int neighbourflags = neighbourcount(f, (int *) neighbours, &neighbourflags_cb, NULL);
+	int neighbourflags = countflags(f, neighbours);
 	if (tile->neighbours != neighbourflags) return NULL;
 
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
@@ -254,7 +234,7 @@ ACT(act_dualcheck) {
 			anu[i] = an[i];
 		}
 	}
-	neighbourfilter(f, anu, &neighbourunknown_cb, NULL);
+	filterunknown(f, anu);
 
 	{
 		int i;
@@ -303,9 +283,9 @@ ACT(act_dualcheck) {
 					bnu[i] = bn[i];
 				}
 			}
-			neighbourfilter(f, bnu, &neighbourunknown_cb, NULL);
+			filterunknown(f, bnu);
 
-			neighbourfilter(f, bnu, &neighbourdifference_cb, anu);
+			neighbourdifference(f, bnu, anu);
 
 			int count = 0;
 			{
