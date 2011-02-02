@@ -134,7 +134,7 @@ static void updatetile(Minefield *f, int idx) {
 static void speak(Minefield *f, const char *msg) {
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
-		printf("%s\n", msg);
+		printf("%s", msg);
 		return;
 	}
 	WINDOW *s = nc->speak;
