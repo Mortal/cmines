@@ -71,7 +71,8 @@ static void ncfree(Player *p, Action **a) {
 static void ncinit(Player *p, Minefield *f) {
 	cbreak(); // TODO: use raw() instead
 	noecho();
-	p->payload = (NCply *) malloc(sizeof(NCply));
+	NCply *n = p->payload = (NCply *) malloc(sizeof(NCply));
+	n->cursidx = 0;
 }
 
 static void ncdeinit(Player *p, Minefield *f) {
@@ -83,6 +84,5 @@ void NCPlayer(Player *p, Minefield *f) {
 	p->deinitfun = &ncdeinit;
 	p->actfun = &ncact;
 	p->freefun = &ncfree;
-	n->cursidx = 0;
-	n->payload = NULL;
+	p->payload = NULL;
 }

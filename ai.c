@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "ai.h"
 #include "Player.h"
+#include "Screen.h"
 
 bool allowcoordreset = 0;
 int nexttileidx_ = 0;
@@ -303,7 +304,19 @@ ACT(act_dualcheck) {
 #undef ACT
 
 static Action **act(Player *p, Minefield *f) {
-#define ACT(method) {Action **ret = method(f, idx); if (ret != NULL) {allowcoordreset = 1; return ret;}}
+#define ACT(method) {\
+	Action **ret = method(f, idx);\
+	if (ret != NULL) {\
+		allowcoordreset = 1;\
+		/*\
+		char msg[256];\
+		snprintf(msg, 255, "AI used %s\n", #method);\
+		msg[255] = 0;\
+		((Screen *) f->scr)->speak(f, msg);\
+		*/\
+		return ret;\
+	}\
+}
 	while (hasnexttile(f)) {
 		int idx = nexttileidx(f);
 		ACT(act_singleflagging);
