@@ -395,11 +395,11 @@ bool isnumber(const char *c) {
 }
 
 int main(int argc, char *argv[]) {
-	Minefield f;
-	f.dimcount = 0;
-	f.automines = 1;
-	f.sleep = 0;
-	f.expect = NULL;
+	Minefield *f = (Minefield *) malloc(sizeof(Minefield));
+	f->dimcount = 0;
+	f->automines = 1;
+	f->sleep = 0;
+	f->expect = NULL;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -415,17 +415,17 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Invalid argument %d\n", dim);
 				exit(1);
 			} else if (dim > 1) {
-				++f.effectivedimcount;
+				++f->effectivedimcount;
 			}
-			++f.dimcount;
+			++f->dimcount;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed") || !strcmp(arg, "--expect")) {
 			// takes an argument, so skip that
 			++i;
 		}
 	}
-	f.dimensions = malloc(sizeof(Coordinate)*f.dimcount);
-	f.dimensionproducts = malloc(sizeof(Coordinate)*f.dimcount);
-	Dimension d = f.dimcount;
+	f->dimensions = malloc(sizeof(Coordinate)*f->dimcount);
+	f->dimensionproducts = malloc(sizeof(Coordinate)*f->dimcount);
+	Dimension d = f->dimcount;
 #define SCREEN_DUMB (0)
 #define SCREEN_NCURSES (1)
 #define SCREEN_SILENT (2)
@@ -437,11 +437,11 @@ int main(int argc, char *argv[]) {
 			int j;
 			--d;
 			if (i == 1) {
-				for (j = 0; j < d; ++j) f.dimensionproducts[j] = dim;
-				f.dimensionproducts[d] = 1;
+				for (j = 0; j < d; ++j) f->dimensionproducts[j] = dim;
+				f->dimensionproducts[d] = 1;
 			}
-			else for (j = 0; j < d; ++j) f.dimensionproducts[j] *= dim;
-			f.dimensions[d] = dim;
+			else for (j = 0; j < d; ++j) f->dimensionproducts[j] *= dim;
+			f->dimensions[d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
 			const char *arg2 = argv[i];
@@ -451,20 +451,20 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr, "Invalid argument %d\n", mines);
 					exit(1);
 				}
-				f.mines = mines;
-				f.automines = 0;
+				f->mines = mines;
+				f->automines = 0;
 			}
 		} else if (!strcmp(arg, "--seed")) {
 			++i;
 			const char *arg2 = argv[i];
 			if (isnumber(arg2)) {
 				int seed = strtol(arg2, NULL, 0);
-				f.seed = seed;
+				f->seed = seed;
 				hasseed = 1;
 			}
 		} else if (!strcmp(arg, "--expect")) {
 			++i;
-			f.expect = argv[i];
+			f->expect = argv[i];
 		} else if (!strcmp(arg, "--ncurses")) {
 			screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "--silent")) {
@@ -472,55 +472,55 @@ int main(int argc, char *argv[]) {
 		} else if (!strcmp(arg, "--manual")) {
 			ai = 0;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
-			f.sleep = 1;
+			f->sleep = 1;
 		}
 	}
 
-	f.tiles = 0;
-	f.coordinatesets = 0;
+	f->tiles = 0;
+	f->coordinatesets = 0;
 
 	if (!hasseed) {
 		srand(time(NULL) & 0xFFFFFFFF);
-		f.seed = rand();
+		f->seed = rand();
 	}
-	srand(f.seed);
+	srand(f->seed);
 
 	Screen scr;
-	f.scr = &scr;
+	f->scr = &scr;
 	switch (screentype) {
 		case SCREEN_NCURSES:
-			ncscreen(&scr, &f);
+			ncscreen(&scr, f);
 			break;
 		case SCREEN_SILENT:
-			silentscreen(&scr, &f);
+			silentscreen(&scr, f);
 			break;
 		default:
-			dumbscreen(&scr, &f);
+			dumbscreen(&scr, f);
 			break;
 	}
-	alloctiles(&f);
-	resettiles(&f);
-	calcmines(&f);
-	setmines(&f);
-	pressrandom(&f, 1);
-	scr.init(&f);
+	alloctiles(f);
+	resettiles(f);
+	calcmines(f);
+	setmines(f);
+	pressrandom(f, 1);
+	scr.init(f);
 	{
 		char seedmsg[256];
-		sprintf(seedmsg, "Seed: %u\n", f.seed);
-		scr.speak(&f, seedmsg);
+		sprintf(seedmsg, "Seed: %u\n", f->seed);
+		scr.speak(f, seedmsg);
 	}
-	printfield(&f);
-	f.state = STATE_PLAY;
+	printfield(f);
+	f->state = STATE_PLAY;
 	Player ply;
 	if (ai) {
-		AI(&ply, &f);
+		AI(&ply, f);
 	} else {
-		NCPlayer(&ply, &f);
+		NCPlayer(&ply, f);
 	}
-	ply.initfun(&ply, &f);
+	ply.initfun(&ply, f);
 	time_t lastprint = 0;
-	while (f.state == STATE_PLAY) {
-		Action **act = (*ply.actfun)(&ply, &f);
+	while (f->state == STATE_PLAY) {
+		Action **act = (*ply.actfun)(&ply, f);
 		bool giveup = 0;
 		int i = 0;
 		while (act[i] != NULL) {
@@ -531,45 +531,51 @@ int main(int argc, char *argv[]) {
 			}
 			int tileidx = a->tileidx;
 			if (a->type == PRESS) {
-				press(&f, tileidx);
+				press(f, tileidx);
 			} else if (a->type == FLAG) {
-				flag(&f, tileidx);
+				flag(f, tileidx);
 			}
 		}
 		time_t now = time(NULL);
-		if (giveup || f.state != STATE_PLAY || now != lastprint) {
+		if (giveup || f->state != STATE_PLAY || now != lastprint) {
 			lastprint = now;
-			printfield(&f);
+			printfield(f);
 		}
 		(*ply.freefun)(&ply, act);
 		if (giveup) break;
 	}
 	const char *msg = "No message";
 	const char *expect = "huh";
-	if (f.state == STATE_PLAY) {
+	if (f->state == STATE_PLAY) {
 		msg = "You give up? Too bad!\n";
 		expect = "giveup";
-	} else if (f.state == STATE_LOST) {
+	} else if (f->state == STATE_LOST) {
 		msg = "Too bad!\n";
 		expect = "loss";
-	} else if (f.state == STATE_WON) {
+	} else if (f->state == STATE_WON) {
 		msg = "Congratulations!\n";
 		expect = "win";
 	}
-	ply.deinitfun(&ply, &f);
-	scr.speak(&f, msg);
-	if (f.sleep) usleep(800000);
-	scr.deinit(&f);
-	if (f.expect != NULL) {
-		return strcmp(expect, f.expect) ? 1 : 0;
+	ply.deinitfun(&ply, f);
+	scr.speak(f, msg);
+	if (f->sleep) usleep(800000);
+	scr.deinit(f);
+	if (f->expect != NULL) {
+		return strcmp(expect, f->expect) ? 1 : 0;
 	}
 	printf("To reproduce:\n%s", argv[0]);
 	{
 		Dimension d;
-		for (d = f.dimcount; d && d--;) {
-			printf(" %d", f.dimensions[d]);
+		for (d = f->dimcount; d && d--;) {
+			printf(" %d", f->dimensions[d]);
 		}
 	}
-	printf(" --mines %d --seed %d --expect %s\n", f.mines, f.seed, expect);
+	printf(" --mines %d --seed %d --expect %s\n", f->mines, f->seed, expect);
+
+	free(f->coordinatesets);
+	free(f->tiles);
+	free(f->dimensions);
+	free(f->dimensionproducts);
+	free(f);
 	return 0;
 }
