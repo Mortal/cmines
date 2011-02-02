@@ -164,21 +164,12 @@ ACT(act_safespots) {
 }
 
 static bool issubset(int *superset, int *subset, int length) {
-	int i;
-	for (i = 0; i < length; ++i) {
-		if (subset[i] == -1) continue;
-		bool exists = 0;
-		int j = 0;
-		for (j = 0; j < length; ++j) {
-			if (superset[j] == -1) continue;
-			if (superset[j] == subset[i]) {
-				exists = 1;
-				break;
-			}
-		}
-		if (!exists) {
-			return 0;
-		}
+	int i, j; /* i is index in subset, j in superset */
+	for (i = 0, j = 0; i < length; ++i) {
+		int tofind = subset[i];
+		if (tofind == -1) continue;
+		while (j < length && superset[j] == -1) ++j;
+		if (j >= length || superset[j] != tofind) return 0;
 	}
 	return 1;
 }
