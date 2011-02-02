@@ -85,7 +85,7 @@ static void neighbourdifference(Minefield *f, int *c, int *set) {
 #define ACT(method) static Action **method(Minefield *f, int idx)
 #define GETTILE(tile) Tile *tile = &f->tiles[idx]
 
-ACT(act_singleflagging) {
+ACT(act_singlecheck) {
 	GETTILE(tile);
 	if (!(tile->flags & (TILE_PRESSED|TILE_FLAGGED))) return NULL;
 	if (!tile->neighbours) return NULL;
@@ -118,10 +118,6 @@ ACT(act_singleflagging) {
 	}
 	ret[retidx] = NULL;
 	return ret;
-}
-
-ACT(act_safespots) {
-	return NULL;
 }
 
 static bool issubset(int *superset, int *subset, int length) {
@@ -298,8 +294,7 @@ static Action **act(Player *p, Minefield *f) {
 }
 	while (hasnexttile(f)) {
 		int idx = nexttileidx(f);
-		ACT(act_singleflagging);
-		ACT(act_safespots);
+		ACT(act_singlecheck);
 	}
 	allowcoordreset = 1;
 	while (hasnexttile(f)) {
