@@ -57,12 +57,9 @@ static void fun(Minefield *f, int *c) {\
 	}\
 }
 
-FILTER(neighbourunpressed, !(tile->flags & TILE_PRESSED))
 FILTER(filterunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
 COUNTER(countunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
 COUNTER(countflags, !!(tile->flags & TILE_FLAGGED))
-FILTER(neighbournoflags, !(tile->flags & TILE_FLAGGED))
-FILTER(neighbourneighbour, (tile->flags & TILE_PRESSED) && (tile->neighbours > 0))
 #undef CB
 
 static void neighbourdifference(Minefield *f, int *c, int *set) {
@@ -86,23 +83,6 @@ static void neighbourdifference(Minefield *f, int *c, int *set) {
 
 #define ACT(method) static Action **method(Minefield *f, int idx)
 #define GETTILE(tile) Tile *tile = &f->tiles[idx]
-
-ACT(act_dumb) {
-	GETTILE(tile);
-	if (tile->flags & (TILE_PRESSED|TILE_FLAGGED)) return NULL;
-
-	Action **res = (Action **) malloc(sizeof(Action *)*2);
-
-	Action act;
-	act.type = PRESS;
-	act.tileidx = idx;
-	res[0] = (Action *) malloc(sizeof(Action));
-	*res[0] = act;
-
-	res[1] = NULL;
-
-	return res;
-}
 
 ACT(act_singleflagging) {
 	GETTILE(tile);
