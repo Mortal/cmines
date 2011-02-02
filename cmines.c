@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef DEBUG
 #include <assert.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 #include "cmines.h"
@@ -93,7 +95,9 @@ void alloctiles(Minefield *f) {
 }
 
 Coordinate *idxtocoords(Minefield *f, int idx) {
+#ifdef DEBUG
 	assert(idx >= 0 && idx <= f->tilecount);
+#endif
 	return f->coordinatesets+idx*f->dimcount;
 }
 
@@ -188,7 +192,9 @@ void setmines(Minefield *f) {
 		for (j = 0; j <= idx; ++j) {
 			if (f->tiles[j].flags & TILE_MINE) ++idx;
 		}
+#ifdef DEBUG
 		assert(idx < f->tilecount);
+#endif
 		f->tiles[idx].flags |= TILE_MINE;
 		int neighbours[f->maxneighbours];
 		neighbourhood(f, idx, (int *) neighbours);
@@ -245,13 +251,19 @@ int ripple_pop(PressRipple *r) {
 }
 
 bool simplepress(Minefield *f, int idx) {
+#ifdef DEBUG
 	assert(idx >= 0 && idx <= f->tilecount);
+#endif
 	Tile *tile = &f->tiles[idx];
 	if (tile->flags & TILE_PRESSED) return 0;
+#ifdef DEBUG
 	assert(!(tile->flags & TILE_PRESSED));
+#endif
 	if (tile->flags & TILE_FLAGGED) tile->flags &= ~TILE_FLAGGED;
 	tile->flags |= TILE_PRESSED;
+#ifdef DEBUG
 	assert(tile->flags & TILE_PRESSED);
+#endif
 	if (tile->flags & TILE_MINE) {
 		if (f->state == STATE_INIT) {
 			printf("Pressed a mine during init!\n");
@@ -296,7 +308,9 @@ static void handlepressoverflow(Minefield *f) {
 }
 
 void press(Minefield *f, int idx) {
+#ifdef DEBUG
 	assert(idx >= 0 && idx <= f->tilecount);
+#endif
 	PressRipple r;
 	int length = 1024;
 	int positions[length];
