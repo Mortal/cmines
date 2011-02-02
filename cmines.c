@@ -122,16 +122,15 @@ void neighbourhood2(Minefield *f, unsigned int root, int *neighbours, Dimension 
 		Coordinate *basis = idxtocoords(f, input);
 		if (basis[d]) {
 			neighbours[i] = input - f->dimensionproducts[d];
-			if (inc == 1 && neighbours[i] == root) neighbours[i] = -1;
 		} else {
 			neighbours[i] = -1;
 		}
 		if (1+basis[d] < f->dimensions[d]) {
 			neighbours[i3] = input + f->dimensionproducts[d];
-			if (inc == 1 && neighbours[i3] == root) neighbours[i3] = -1;
 		} else {
 			neighbours[i3] = -1;
 		}
+		if (inc == 1 && neighbours[i2] == root) neighbours[i2] = -1;
 	}
 	neighbourhood2(f, root, neighbours, d+1, times*3);
 }
