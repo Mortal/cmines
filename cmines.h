@@ -64,7 +64,7 @@ int outputrow(Minefield *, Coordinate *tile);
 
 /* Convert tile index to coordinates. Returns a pointer into the huge
  * `coordinatesets' array. */
-Coordinate *idxtocoords(Minefield *, int idx) __attribute__((always_inline));
+Coordinate *idxtocoords(Minefield *, int idx);
 
 /* Convert coordinates to tile index. When passed a pointer into
  * `coordinatesets', calculates index by pointer arithmetic. */
