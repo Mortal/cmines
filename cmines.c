@@ -322,7 +322,7 @@ void press(Minefield *f, int idx) {
 		ripplepress(f, &r);
 	}
 	if (r.overflow) handlepressoverflow(f);
-	if (f->sleep) usleep(20000);
+	if (f->sleep) usleep(100000);
 }
 
 void flag(Minefield *f, int idx) {

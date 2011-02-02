@@ -87,7 +87,7 @@ static void neighbourdifference(Minefield *f, int *c, int *set) {
 
 ACT(act_singlecheck) {
 	GETTILE(tile);
-	if (!(tile->flags & (TILE_PRESSED|TILE_FLAGGED))) return NULL;
+	if (!(tile->flags & TILE_PRESSED)) return NULL;
 	if (!tile->neighbours) return NULL;
 	int neighbours[f->maxneighbours];
 	neighbourhood(f, idx, (int *) neighbours);
@@ -134,13 +134,19 @@ static bool issubset(int *superset, int *subset, int length) {
 #ifdef DEBUG
 /* aid in debugging with gdb */
 void printtile(Minefield *f, int idx) {
+	Screen *s = (Screen *) f->scr;
+	const int l = 512;
+	char msg[l];
+	int i = 0;
 	Tile *t = &f->tiles[idx];
 	Coordinate *coords = idxtocoords(f, idx);
 	Dimension d;
 	for (d = 0; d < f->dimcount; ++d) {
-		printf("%d,", coords[d]);
+		i += snprintf(msg+i, l-i, "%d,", coords[d]); if (i >= l) break;
 	}
-	printf(" neighbours=%d flags=%x\n", t->neighbours, t->flags);
+	i += snprintf(msg+i, l-i, " neighbours=%d flags=%x\n", t->neighbours, t->flags);
+	msg[l-1] = 0;
+	s->speak(f, msg);
 }
 
 void printtiles(Minefield *f, int *tiles) {
@@ -152,7 +158,12 @@ void printtiles(Minefield *f, int *tiles) {
 		printtile(f, idx);
 		++count;
 	}
-	printf("%d tiles\n", count);
+	//printf("%d tiles\n", count);
+}
+#else
+void printtile(Minefield *f, int idx) {
+}
+void printtiles(Minefield *f, int *tiles) {
 }
 #endif
 
@@ -288,6 +299,7 @@ static Action **act(Player *p, Minefield *f) {
 		snprintf(msg, 255, "AI used %s\n", #method);\
 		msg[255] = 0;\
 		((Screen *) f->scr)->speak(f, msg);\
+		printtile(f, idx);\
 		*/\
 		return ret;\
 	}\

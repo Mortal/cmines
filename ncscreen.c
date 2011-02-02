@@ -36,6 +36,8 @@ static void screeninit(Minefield *f) {
 	NC *nc = f->scr->data = (NC *) malloc(sizeof(NC));
 
 	initscr();
+	cbreak();
+	noecho();
 
 	nc->colors = has_colors();
 
@@ -129,6 +131,9 @@ static void updatetile(Minefield *f, int idx) {
 	wmove(w, row, column);
 	puttile(f, c);
 	wrefresh(w);
+#ifdef DEBUG
+	getch();
+#endif
 }
 
 static void speak(Minefield *f, const char *msg) {
