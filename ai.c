@@ -94,7 +94,14 @@ ACT(act_singleflagging) {
 	int neighbourunknown = countunknown(f, (int *) neighbours);
 	if (!neighbourunknown) return NULL;
 	int neighbourflags = countflags(f, (int *) neighbours);
-	if (tile->neighbours != neighbourunknown + neighbourflags) return NULL;
+	Action act;
+	if (tile->neighbours == neighbourflags) {
+		act.type = PRESS;
+	} else if (tile->neighbours == neighbourunknown + neighbourflags) {
+		act.type = FLAG;
+	} else {
+		return NULL;
+	}
 
 	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
 	int retidx = 0;
@@ -104,8 +111,6 @@ ACT(act_singleflagging) {
 		if (idx == -1) continue;
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
-			Action act;
-			act.type = FLAG;
 			act.tileidx = idx;
 			Action *pact = ret[retidx++] = (Action *) malloc(sizeof(Action));
 			*pact = act;
@@ -116,33 +121,7 @@ ACT(act_singleflagging) {
 }
 
 ACT(act_safespots) {
-	GETTILE(tile);
-	if (!(tile->flags & (TILE_PRESSED|TILE_FLAGGED))) return NULL;
-	if (!tile->neighbours) return NULL;
-	int neighbours[f->maxneighbours];
-	neighbourhood(f, idx, (int *) neighbours);
-	int neighbourunknown = countunknown(f, neighbours);
-	if (!neighbourunknown) return NULL;
-	int neighbourflags = countflags(f, neighbours);
-	if (tile->neighbours != neighbourflags) return NULL;
-
-	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
-	int retidx = 0;
-	int i;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		int idx = neighbours[i];
-		if (idx == -1) continue;
-		Tile *t = &f->tiles[idx];
-		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
-			Action act;
-			act.type = PRESS;
-			act.tileidx = idx;
-			Action *pact = ret[retidx++] = (Action *) malloc(sizeof(Action));
-			*pact = act;
-		}
-	}
-	ret[retidx] = NULL;
-	return ret;
+	return NULL;
 }
 
 static bool issubset(int *superset, int *subset, int length) {
