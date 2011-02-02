@@ -136,9 +136,8 @@ void neighbourhood2(Minefield *f, unsigned int root, int *neighbours, Dimension 
 }
 
 void neighbourhood(Minefield *f, unsigned int root, int *neighbours) {
+	memset(neighbours, -1, sizeof(int)*(f->maxneighbours));
 	neighbours[0] = root;
-	int i;
-	for (i = 1; i < f->maxneighbours; ++i) neighbours[i] = -1;
 	neighbourhood2(f, root, neighbours, 0, 3);
 	return;
 
