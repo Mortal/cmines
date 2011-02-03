@@ -4,6 +4,7 @@
 #include "cmines.h"
 #include "Screen.h"
 #include "ncscreen.h"
+#include "silentscreen.h"
 
 /* fields with no neighbours */
 #define PAIR_VOID (1)
@@ -148,6 +149,7 @@ static void speak(Minefield *f, const char *msg) {
 }
 
 void ncscreen(Screen *s, Minefield *f) {
+	silentscreen(s, f);
 	s->init = &screeninit;
 	s->deinit = &screendeinit;
 	s->updatefield = &updatefield;
