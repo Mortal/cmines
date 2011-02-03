@@ -148,6 +148,12 @@ static void speak(Minefield *f, const char *msg) {
 	wrefresh(s);
 }
 
+static void ncmark(Minefield *f, int idx, int mark) {
+}
+
+static void ncresetmarks(Minefield *f) {
+}
+
 void ncscreen(Screen *s, Minefield *f) {
 	silentscreen(s, f);
 	s->init = &screeninit;
@@ -155,5 +161,7 @@ void ncscreen(Screen *s, Minefield *f) {
 	s->updatefield = &updatefield;
 	s->updatetile = &updatetile;
 	s->speak = &speak;
+	s->mark = &ncmark;
+	s->resetmarks = &ncresetmarks;
 	s->data = NULL;
 }
