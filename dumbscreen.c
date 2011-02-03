@@ -4,29 +4,13 @@
 #include "cmines.h"
 #include "Screen.h"
 #include "dumbscreen.h"
-
-static void dumbinit(Minefield *f) {
-}
-
-static void dumbdeinit(Minefield *f) {
-}
+#include "silentscreen.h"
 
 static void dumbupdatefield(Minefield *f, const char *field) {
 	printf("%s", field);
 }
 
-static void dumbupdatetile(Minefield *f, int idx) {
-}
-
-static void dumbspeak(Minefield *f, const char *msg) {
-	printf("%s\n", msg);
-}
-
 void dumbscreen(Screen *s, Minefield *f) {
-	s->init = &dumbinit;
-	s->deinit = &dumbdeinit;
+	silentscreen(s, f);
 	s->updatefield = &dumbupdatefield;
-	s->updatetile = &dumbupdatetile;
-	s->speak = &dumbspeak;
-	s->data = NULL;
 }
