@@ -21,11 +21,19 @@ static void silentspeak(Minefield *f, const char *msg) {
 	printf("%s\n", msg);
 }
 
+static void silentmark(Minefield *f, int idx, int mark) {
+}
+
+static void silentresetmarks(Minefield *f) {
+}
+
 void silentscreen(Screen *s, Minefield *f) {
 	s->init = &silentinit;
 	s->deinit = &silentdeinit;
 	s->updatefield = &silentupdatefield;
 	s->updatetile = &silentupdatetile;
 	s->speak = &silentspeak;
+	s->mark = &silentmark;
+	s->resetmarks = &silentresetmarks;
 	s->data = NULL;
 }
