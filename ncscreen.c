@@ -129,6 +129,15 @@ static void updatefield(Minefield *f, const char *field) {
 		return;
 	}
 	WINDOW *w = nc->field;
+	const int lineoffset = f->outputwidth+1;
+	const chtype lines[] = {
+		/* 0bABCD: A : above, B : right, C: below, D: left */
+		/* 00          01         10          11 */
+		ACS_BULLET, ACS_HLINE, ACS_VLINE, ACS_URCORNER, /* 00xx */
+		ACS_HLINE, ACS_HLINE, ACS_ULCORNER, ACS_TTEE, /* 01xx */
+		ACS_VLINE, ACS_LRCORNER, ACS_VLINE, ACS_RTEE, /* 10xx */
+		ACS_LLCORNER, ACS_BTEE, ACS_LTEE, ACS_PLUS /* 11xx */
+	};
 	if (nc->colors) {
 		wmove(w, 0, 0);
 		int x = 0;
@@ -139,12 +148,18 @@ static void updatefield(Minefield *f, const char *field) {
 			char ch = right;
 			right = *++field;
 			if (ch == '+') {
-				waddch(w, ACS_PLUS | COLOR_PAIR(PAIR_BOUNDS));
+				char above = y ? *(field-lineoffset-1) : '\0';
+				char below = (y+1 < f->outputheight) ? *(field+lineoffset-1) : '\0';
+				waddch(w, lines[(left == '+')
+				                + ((below == '+') << 1)
+				                + ((right == '+') << 2)
+				                + ((above == '+') << 3)] | COLOR_PAIR(PAIR_BOUNDS));
+			} else if (ch == '\n') {
+				x = -1;
+				++y;
+				waddch(w, '\n');
+				ch = '\0';
 			} else {
-				if (ch == '\n') {
-					x = -1;
-					++y;
-				}
 				puttile(f, ch, 0);
 			}
 			left = ch;
