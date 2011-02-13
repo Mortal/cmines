@@ -211,17 +211,6 @@ ACT(act_dualcheck) {
 
 			if (!(b->flags & TILE_PRESSED)) continue;
 
-#ifdef DEBUG
-			bool debug = idx == 55*200+2 && bidx == 55*200+1;
-
-			if (debug) {
-				printtile(f, idx);
-				printtile(f, bidx);
-			}
-#else
-#  define debug (0)
-#endif
-
 			// get b's neighbourhood
 			int bn[f->maxneighbours];
 			neighbourhood(f, bidx, (int *) bn);
@@ -233,13 +222,10 @@ ACT(act_dualcheck) {
 				for (i = 0; i < f->maxneighbours; ++i) {
 					if (bn[i] == -1) continue;
 					if (f->tiles[bn[i]].flags & TILE_FLAGGED) {
-						//if (debug) printtile(f, bn[i-1]);
 						--bnb;
 					}
 				}
 			}
-
-			if (debug) printf("A has %d/%d neighbours and B has %d/%d neighbours\n", anb, a->neighbours, bnb, b->neighbours);
 
 			// get b's unknown neighbourhood (unflagged, unpressed)
 			int bnu[f->maxneighbours];
