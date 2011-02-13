@@ -278,6 +278,12 @@ static Action **act(Player *p, Minefield *f) {
 #define ACT(method) {\
 	Action **ret = method(f, idx);\
 	if (ret != NULL) {\
+		f->scr->resetmarks(f);\
+		f->scr->mark(f, idx, 1);\
+		int i;\
+		for (i = 0; ret[i] != NULL; ++i) {\
+			f->scr->mark(f, ret[i]->tileidx, 2);\
+		}\
 		allowcoordreset = 1;\
 		/*\
 		char msg[256];\

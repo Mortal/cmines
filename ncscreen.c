@@ -35,6 +35,7 @@ static void freemarks(NC *nc) {
 static void screendeinit(Minefield *f) {
 	if (f->scr->data == NULL) return;
 	NC *nc = (NC *) f->scr->data;
+	curs_set(1);
 	endwin();
 	delwin(nc->field);
 	delwin(nc->speak);
@@ -53,6 +54,7 @@ static void screeninit(Minefield *f) {
 	initscr();
 	cbreak();
 	noecho();
+	curs_set(0);
 
 	nc->colors = has_colors();
 
@@ -93,22 +95,20 @@ static void screeninit(Minefield *f) {
 	nc->mark = NULL;
 }
 
-static void puttile(Minefield *f, char tile, int mark) {
+static void puttile(Minefield *f, chtype ch, int mark) {
 	NC *nc = (NC *) f->scr->data;
+	char tile = ch & A_CHARTEXT;
 	if (nc == NULL) {
 		putchar(tile);
 		return;
 	}
 	WINDOW *w = nc->field;
-	chtype ch = tile;
 	if (tile == '/') {
 		ch |= COLOR_PAIR(PAIR_FLAG);
 	} else if (tile == '.') {
 		ch |= COLOR_PAIR(PAIR_UNKNOWN);
 	} else if (tile == '@') {
 		ch |= COLOR_PAIR(PAIR_BOMB);
-	} else if (tile == '+') {
-		ch |= COLOR_PAIR(PAIR_BOUNDS);
 	} else if (tile == ' ') {
 		ch |= COLOR_PAIR(PAIR_VOID);
 	} else {
@@ -131,8 +131,24 @@ static void updatefield(Minefield *f, const char *field) {
 	WINDOW *w = nc->field;
 	if (nc->colors) {
 		wmove(w, 0, 0);
-		while (*field != '\0') {
-			puttile(f, *(field++), 0);
+		int x = 0;
+		int y = 0;
+		char left = '\0';
+		char right = *field;
+		while (right != '\0') {
+			char ch = right;
+			right = *++field;
+			if (ch == '+') {
+				waddch(w, ACS_PLUS | COLOR_PAIR(PAIR_BOUNDS));
+			} else {
+				if (ch == '\n') {
+					x = -1;
+					++y;
+				}
+				puttile(f, ch, 0);
+			}
+			left = ch;
+			++x;
 		}
 		return;
 	}
