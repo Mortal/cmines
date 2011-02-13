@@ -104,9 +104,9 @@ static void puttile(Minefield *f, chtype ch, int mark) {
 	}
 	WINDOW *w = nc->field;
 	if (tile == '/') {
-		ch |= COLOR_PAIR(PAIR_FLAG);
+		ch = ACS_DIAMOND | COLOR_PAIR(PAIR_FLAG);
 	} else if (tile == '.') {
-		ch |= COLOR_PAIR(PAIR_UNKNOWN);
+		ch = ACS_BULLET | COLOR_PAIR(PAIR_UNKNOWN);
 	} else if (tile == '@') {
 		ch |= COLOR_PAIR(PAIR_BOMB);
 	} else if (tile == ' ') {
@@ -148,11 +148,11 @@ static void updatefield(Minefield *f, const char *field) {
 			char ch = right;
 			right = *++field;
 			if (ch == '+') {
-				char above = y ? *(field-lineoffset-1) : '\0';
-				char below = (y+1 < f->outputheight) ? *(field+lineoffset-1) : '\0';
-				waddch(w, lines[(left == '+')
+				char above = y ? *(field-lineoffset-1) : '+';
+				char below = (y+1 < f->outputheight) ? *(field+lineoffset-1) : '+';
+				waddch(w, lines[(left == '+' || !x)
 				                + ((below == '+') << 1)
-				                + ((right == '+') << 2)
+				                + ((right == '+' || right == '\n' || right == '\0') << 2)
 				                + ((above == '+') << 3)] | COLOR_PAIR(PAIR_BOUNDS));
 			} else if (ch == '\n') {
 				x = -1;
