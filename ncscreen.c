@@ -21,12 +21,25 @@
 
 typedef struct NCscreen NC;
 
+static void freemarks(NC *nc) {
+	NCmark *mark = nc->mark;
+	while (mark != NULL) {
+		NCmark *m = mark;
+		mark = m->next;
+		free(m);
+	}
+	nc->mark = NULL;
+}
+
 static void screendeinit(Minefield *f) {
 	if (f->scr->data == NULL) return;
 	NC *nc = (NC *) f->scr->data;
 	endwin();
 	delwin(nc->field);
 	delwin(nc->speak);
+
+	freemarks(nc);
+
 	free(f->scr->data);
 	f->scr->data = NULL;
 }
@@ -75,9 +88,11 @@ static void screeninit(Minefield *f) {
 	wrefresh(nc->field);
 	wrefresh(nc->speak);
 	refresh();
+
+	nc->mark = NULL;
 }
 
-static void puttile(Minefield *f, char tile) {
+static void puttile(Minefield *f, char tile, int mark) {
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
 		putchar(tile);
@@ -98,6 +113,11 @@ static void puttile(Minefield *f, char tile) {
 	} else {
 		ch |= COLOR_PAIR(PAIR_WALL);
 	}
+	if (mark == 1) {
+		ch |= A_REVERSE;
+	} else if (mark == 2) {
+		ch |= A_STANDOUT;
+	}
 	waddch(w, ch);
 }
 
@@ -111,7 +131,7 @@ static void updatefield(Minefield *f, const char *field) {
 	if (nc->colors) {
 		wmove(w, 0, 0);
 		while (*field != '\0') {
-			puttile(f, *(field++));
+			puttile(f, *(field++), 0);
 		}
 		return;
 	}
@@ -120,7 +140,7 @@ static void updatefield(Minefield *f, const char *field) {
 	refresh();
 }
 
-static void updatetile(Minefield *f, int idx) {
+static void updatetile_mark(Minefield *f, int idx, int mark) {
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
 		return;
@@ -130,11 +150,15 @@ static void updatetile(Minefield *f, int idx) {
 	char c = tilechar(f->tiles+idx);
 	WINDOW *w = nc->field;
 	wmove(w, row, column);
-	puttile(f, c);
+	puttile(f, c, mark);
 	wrefresh(w);
 #ifdef DEBUG
 	getch();
 #endif
+}
+
+static void updatetile(Minefield *f, int idx) {
+	updatetile_mark(f, idx, 0);
 }
 
 static void speak(Minefield *f, const char *msg) {
@@ -149,9 +173,22 @@ static void speak(Minefield *f, const char *msg) {
 }
 
 static void ncmark(Minefield *f, int idx, int mark) {
+	NC *nc = (NC *) f->scr->data;
+	NCmark *add = (NCmark *) malloc(sizeof(NCmark));
+	add->idx = idx;
+	add->mark = mark;
+	add->next = nc->mark;
+	nc->mark = add;
+	updatetile_mark(f, idx, mark);
 }
 
 static void ncresetmarks(Minefield *f) {
+	NC *nc = (NC *) f->scr->data;
+	NCmark *m = nc->mark;
+	while (m != NULL) {
+		updatetile_mark(f, m->idx, 0);
+		m = m->next;
+	}
 }
 
 void ncscreen(Screen *s, Minefield *f) {
