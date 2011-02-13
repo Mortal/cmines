@@ -153,9 +153,6 @@ static void updatetile_mark(Minefield *f, int idx, int mark) {
 	wmove(w, row, column);
 	puttile(f, c, mark);
 	wrefresh(w);
-#ifdef DEBUG
-	getch();
-#endif
 }
 
 static void updatetile(Minefield *f, int idx) {
