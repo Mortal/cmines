@@ -19,6 +19,10 @@
 #define PAIR_FLAG (5)
 /* pressed bombs */
 #define PAIR_BOMB (6)
+/* primary mark */
+#define PAIR_PRIMARY_MARK (7)
+/* secondary mark */
+#define PAIR_SECONDARY_MARK (8)
 
 typedef struct NCscreen NC;
 
@@ -66,6 +70,8 @@ static void screeninit(Minefield *f) {
 		init_pair(PAIR_UNKNOWN, COLOR_CYAN, COLOR_BLACK);
 		init_pair(PAIR_FLAG, COLOR_RED, COLOR_BLACK);
 		init_pair(PAIR_BOMB, COLOR_BLACK, COLOR_RED);
+		init_pair(PAIR_PRIMARY_MARK, COLOR_RED, COLOR_WHITE);
+		init_pair(PAIR_SECONDARY_MARK, COLOR_BLACK, COLOR_BLUE);
 	}
 
 	int width = f->outputwidth+1;
@@ -104,20 +110,24 @@ static void puttile(Minefield *f, chtype ch, int mark) {
 	}
 	WINDOW *w = nc->field;
 	if (tile == '/') {
-		ch = ACS_DIAMOND | COLOR_PAIR(PAIR_FLAG);
+		ch = ACS_DIAMOND;
 	} else if (tile == '.') {
-		ch = ACS_BULLET | COLOR_PAIR(PAIR_UNKNOWN);
+		ch = ACS_BULLET;
+	}
+	if (mark == 1) {
+		ch |= COLOR_PAIR(PAIR_PRIMARY_MARK);
+	} else if (mark == 2) {
+		ch |= COLOR_PAIR(PAIR_SECONDARY_MARK);
+	} else if (tile == '/') {
+		ch |= COLOR_PAIR(PAIR_FLAG);
+	} else if (tile == '.') {
+		ch |= COLOR_PAIR(PAIR_UNKNOWN);
 	} else if (tile == '@') {
 		ch |= COLOR_PAIR(PAIR_BOMB);
 	} else if (tile == ' ') {
 		ch |= COLOR_PAIR(PAIR_VOID);
 	} else {
 		ch |= COLOR_PAIR(PAIR_WALL);
-	}
-	if (mark == 1) {
-		ch |= A_REVERSE;
-	} else if (mark == 2) {
-		ch |= A_STANDOUT;
 	}
 	waddch(w, ch);
 }
@@ -169,7 +179,6 @@ static void updatefield(Minefield *f, const char *field) {
 	}
 	mvwprintw(w, 0, 0, "%s", field);
 	wrefresh(w);
-	refresh();
 }
 
 static void updatetile_mark(Minefield *f, int idx, int mark) {
@@ -222,6 +231,7 @@ static void ncresetmarks(Minefield *f) {
 		updatetile_mark(f, m->idx, 0);
 		m = m->next;
 	}
+	freemarks(nc);
 }
 
 void ncscreen(Screen *s, Minefield *f) {

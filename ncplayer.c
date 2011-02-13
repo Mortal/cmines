@@ -15,8 +15,17 @@ const char deckeys[] = "awji";
 
 static void setcursor(Player *p, Minefield *f, WINDOW *scr) {
 	NCply *d = (NCply *) p->payload;
-	Coordinate *tile = idxtocoords(f, d->cursidx);
-	wmove(scr, outputrow(f, tile), outputcolumn(f, tile));
+	int idx = d->cursidx;
+	f->scr->resetmarks(f);
+	f->scr->mark(f, idx, 1);
+	int neighbours[f->maxneighbours];
+	neighbourhood(f, idx, neighbours);
+	int i;
+	for (i = 0; i < f->maxneighbours; ++i) {
+		int n = neighbours[i];
+		if (n == -1) continue;
+		f->scr->mark(f, n, 2);
+	}
 	wrefresh(scr);
 }
 

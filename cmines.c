@@ -514,7 +514,6 @@ int main(int argc, char *argv[]) {
 		NCPlayer(&ply, f);
 	}
 	ply.initfun(&ply, f);
-	time_t lastprint = 0;
 	while (f->state == STATE_PLAY) {
 		Action **act = (*ply.actfun)(&ply, f);
 		bool giveup = 0;
@@ -532,9 +531,7 @@ int main(int argc, char *argv[]) {
 				flag(f, tileidx);
 			}
 		}
-		time_t now = time(NULL);
-		if (giveup || f->state != STATE_PLAY || now != lastprint) {
-			lastprint = now;
+		if (giveup || f->state != STATE_PLAY) {
 			printfield(f);
 		}
 		(*ply.freefun)(&ply, act);
