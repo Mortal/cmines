@@ -1,4 +1,10 @@
-OPTS=-Wall -ggdb
+DEBUG=1
+
+ifeq ($(DEBUG),)
+	OPTS=-Wall -O3
+else
+	OPTS=-Wall -ggdb -DDEBUG
+endif
 
 .c.o:
 	gcc $(OPTS) -c $<
