@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <curses.h>
+#include <stdarg.h>
 #include "cmines.h"
 #include "Screen.h"
 #include "silentscreen.h"
@@ -17,8 +18,11 @@ static void silentupdatefield(Minefield *f, const char *field) {
 static void silentupdatetile(Minefield *f, int idx) {
 }
 
-static void silentspeak(Minefield *f, const char *msg) {
-	printf("%s\n", msg);
+static void silentspeak(Minefield *f, const char *fmt, ...) {
+	va_list argp;
+	va_start(argp, fmt);
+	vprintf(fmt, argp);
+	va_end(argp);
 }
 
 static void silentmark(Minefield *f, int idx, int mark) {

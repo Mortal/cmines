@@ -144,9 +144,8 @@ void printtile(Minefield *f, int idx) {
 	for (d = 0; d < f->dimcount; ++d) {
 		i += snprintf(msg+i, l-i, "%d,", coords[d]); if (i >= l) break;
 	}
-	i += snprintf(msg+i, l-i, " neighbours=%d flags=%x\n", t->neighbours, t->flags);
 	msg[l-1] = 0;
-	s->speak(f, msg);
+	s->speak(f, "%s neighbours=%d flags=%x\n", msg, t->neighbours, t->flags);
 }
 
 void printtiles(Minefield *f, int *tiles) {

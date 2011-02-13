@@ -8,7 +8,7 @@ typedef void (*scrinit)(Minefield *f);
 typedef void (*scrdeinit)(Minefield *);
 typedef void (*scrupdatefield)(Minefield *, const char *field);
 typedef void (*scrupdatetile)(Minefield *, int idx);
-typedef void (*scrspeak)(Minefield *, const char *msg);
+typedef void (*scrspeak)(Minefield *, const char *fmt, ...);
 typedef void (*scrmark)(Minefield *, int idx, int mark);
 typedef void (*scrresetmarks)(Minefield *);
 

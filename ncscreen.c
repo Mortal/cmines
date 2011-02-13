@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <curses.h>
+#include <stdarg.h>
 #include "cmines.h"
 #include "Screen.h"
 #include "ncscreen.h"
@@ -161,14 +162,18 @@ static void updatetile(Minefield *f, int idx) {
 	updatetile_mark(f, idx, 0);
 }
 
-static void speak(Minefield *f, const char *msg) {
+static void speak(Minefield *f, const char *fmt, ...) {
+	va_list argp;
+	va_start(argp, fmt);
 	NC *nc = (NC *) f->scr->data;
 	if (nc == NULL) {
-		printf("%s", msg);
+		vprintf(fmt, argp);
+		va_end(argp);
 		return;
 	}
 	WINDOW *s = nc->speak;
-	wprintw(s, msg);
+	vwprintw(s, fmt, argp);
+	va_end(argp);
 	wrefresh(s);
 }
 

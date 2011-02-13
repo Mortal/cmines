@@ -504,11 +504,7 @@ int main(int argc, char *argv[]) {
 	setmines(f);
 	pressrandom(f, 1);
 	scr.init(f);
-	{
-		char seedmsg[256];
-		sprintf(seedmsg, "Seed: %u\n", f->seed);
-		scr.speak(f, seedmsg);
-	}
+	scr.speak(f, "Seed: %u\n", f->seed);
 	printfield(f);
 	f->state = STATE_PLAY;
 	Player ply;
