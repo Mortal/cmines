@@ -62,6 +62,7 @@ static Action **ncact(Player *p, Minefield *f) {
 				}
 				int delta = f->dimensionproducts[f->dimcount-i-1];
 				if (ch == deckeys[i]) delta = -delta;
+				if (-delta > d->cursidx) d->cursidx += f->tilecount;
 				d->cursidx += delta;
 				d->cursidx %= f->tilecount;
 			}
