@@ -4,13 +4,10 @@
 #include "Minefield.h"
 #include "Screen.h"
 #include "dumbscreen.h"
-#include "silentscreen.h"
 
-static void dumbupdatefield(Minefield *f, const char *field) {
+void DumbScreen::updatefield(Minefield *f, const char *field) {
 	printf("%s", field);
 }
 
-void dumbscreen(Screen *s, Minefield *f) {
-	silentscreen(s, f);
-	s->updatefield = &dumbupdatefield;
+DumbScreen::DumbScreen(Minefield *f) {
 }

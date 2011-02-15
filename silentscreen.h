@@ -5,6 +5,9 @@
 #include "Minefield.h"
 #include "Screen.h"
 
-void silentscreen(Screen *, Minefield *);
+class SilentScreen : public Screen<SilentScreen> {
+	public:
+		SilentScreen(Minefield *);
+};
 
 #endif

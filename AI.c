@@ -131,7 +131,7 @@ bool AI::issubset(int *superset, int *subset, int length) {
 #ifdef DEBUG
 /* aid in debugging with gdb */
 void printtile(Minefield *f, int idx) {
-	Screen *s = (Screen *) f->scr;
+	NCScreen *s = f->scr;
 	const int l = 512;
 	char msg[l];
 	int i = 0;

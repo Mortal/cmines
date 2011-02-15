@@ -4,7 +4,7 @@
 #include <ncurses.h>
 #include <stdlib.h>
 
-#define GETSCR(f, scr) WINDOW *scr = ((struct NCscreen *) f->scr->data)->field
+#define GETSCR(f, scr) WINDOW *scr = ((class NCScreen *) f->scr)->getField()
 
 const char inckeys[] = "dslk";
 const char deckeys[] = "awji";

@@ -15,6 +15,8 @@
 
 #include "types.h"
 #include "Player.h"
+#include "Screen.h"
+#include "ncscreen.h"
 
 char tilechar(Tile *tile);
 
@@ -71,7 +73,7 @@ public:
 	bool sleep;
 
 	/* Screen functions */
-	struct _Screen *scr;
+	NCScreen *scr;
 
 	/* seed passed to srand() before generating the minefield. */
 	unsigned int seed;

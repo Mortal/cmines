@@ -483,8 +483,8 @@ int Minefield::main(int argc, char *argv[]) {
 	}
 	srand(this->seed);
 
-	Screen scr;
-	this->scr = &scr;
+	this->scr = new NCScreen(this);
+	/*
 	switch (screentype) {
 		case SCREEN_NCURSES:
 			ncscreen(&scr, this);
@@ -496,6 +496,7 @@ int Minefield::main(int argc, char *argv[]) {
 			dumbscreen(&scr, this);
 			break;
 	}
+	*/
 	this->alloctiles();
 	this->resettiles();
 	this->calcmines();
@@ -528,9 +529,9 @@ int Minefield::main(int argc, char *argv[]) {
 		msg = "Congratulations!\n";
 		expect = "win";
 	}
-	scr.speak(this, msg);
+	scr->speak(this, msg);
 	if (this->sleep) usleep(800000);
-	scr.deinit(this);
+	scr->deinit(this);
 	if (this->expect != NULL) {
 		return strcmp(expect, this->expect) ? 1 : 0;
 	}

@@ -5,6 +5,9 @@
 #include "Minefield.h"
 #include "Screen.h"
 
-void dumbscreen(Screen *, Minefield *);
+class DumbScreen : public Screen<DumbScreen> {
+	public:
+		DumbScreen(Minefield *);
+};
 
 #endif
