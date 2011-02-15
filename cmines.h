@@ -14,6 +14,7 @@
  */
 
 #include "types.h"
+#include "Player.h"
 
 char tilechar(Tile *tile);
 
@@ -107,6 +108,9 @@ public:
 	int main(int argc, char *argv[]);
 
 private:
+	template <class ConcretePlayer>
+	void playgame(class Player<ConcretePlayer> *ply);
+
 	/* Check if the game is over */
 	void checkstate();
 

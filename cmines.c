@@ -12,7 +12,7 @@
 #include "dumbscreen.h"
 #include "silentscreen.h"
 #include "ai.h"
-#include "ncplayer.h"
+//#include "ncplayer.h"
 
 char tilechar(Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';
@@ -505,36 +505,11 @@ int Minefield::main(int argc, char *argv[]) {
 	this->scr->speak(this, "Seed: %u\n", this->seed);
 	this->printfield();
 	this->state = STATE_PLAY;
-	Player ply;
-	if (ai) {
-		AI(&ply, this);
-	} else {
-		NCPlayer(&ply, this);
-	}
-	ply.initfun(&ply, this);
-	while (this->state == STATE_PLAY) {
-		Action **act = (*ply.actfun)(&ply, this);
-		bool giveup = 0;
-		int i = 0;
-		while (act[i] != NULL) {
-			Action *a = act[i++];
-			if (a->type == GIVEUP) {
-				giveup = 1;
-				break;
-			}
-			int tileidx = a->tileidx;
-			if (a->type == PRESS) {
-				this->press(tileidx);
-			} else if (a->type == FLAG) {
-				this->flag(tileidx);
-			}
-		}
-		if (giveup || this->state != STATE_PLAY) {
-			this->printfield();
-		}
-		(*ply.freefun)(&ply, act);
-		if (giveup) break;
-	}
+
+	Player<AI> *ply = new AI(this);
+	this->playgame(ply);
+	delete ply;
+
 	const char *msg = "No message";
 	const char *expect = "huh";
 	if (this->state == STATE_PLAY) {
@@ -547,7 +522,6 @@ int Minefield::main(int argc, char *argv[]) {
 		msg = "Congratulations!\n";
 		expect = "win";
 	}
-	ply.deinitfun(&ply, this);
 	scr.speak(this, msg);
 	if (this->sleep) usleep(800000);
 	scr.deinit(this);
@@ -569,4 +543,33 @@ int Minefield::main(int argc, char *argv[]) {
 	delete (this->dimensionproducts);
 	delete (this);
 	return 0;
+}
+
+template <class ConcretePlayer>
+void Minefield::playgame(Player<ConcretePlayer> *ply) {
+	ply->init(this);
+	while (this->state == STATE_PLAY) {
+		Action **act = ply->act(this);
+		bool giveup = 0;
+		int i = 0;
+		while (act[i] != NULL) {
+			Action *a = act[i++];
+			if (a->type == GIVEUP) {
+				giveup = 1;
+				break;
+			}
+			int tileidx = a->tileidx;
+			if (a->type == PRESS) {
+				this->press(tileidx);
+			} else if (a->type == FLAG) {
+				this->flag(tileidx);
+			}
+		}
+		if (giveup || this->state != STATE_PLAY) {
+			this->printfield();
+		}
+		ply->free(act);
+		if (giveup) break;
+	}
+	ply->deinit(this);
 }

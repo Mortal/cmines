@@ -9,7 +9,7 @@ endif
 .c.o:
 	g++ $(OPTS) -c $<
 
-OBJECTS = ai.o cmines.o ncscreen.o dumbscreen.o silentscreen.o ncplayer.o
+OBJECTS = ai.o cmines.o ncscreen.o dumbscreen.o silentscreen.o
 
 all: $(OBJECTS)
 	g++ $(OPTS) -lncurses $(OBJECTS) -o cmines

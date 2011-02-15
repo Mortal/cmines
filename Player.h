@@ -1,6 +1,5 @@
 #ifndef PLAYER_H
 #define PLAYER_H
-#include "cmines.h"
 
 enum ActionType {
 	PRESS,
@@ -13,19 +12,21 @@ typedef struct {
 	int tileidx;
 } Action;
 
-struct _Player;
-
-typedef void (*plyinitfun)(struct _Player *, Minefield *);
-typedef void (*plydeinitfun)(struct _Player *, Minefield *);
-typedef Action **(*plyactfun)(struct _Player *, Minefield *);
-typedef void (*plyfreefun)(struct _Player *, Action **);
-
-typedef struct _Player {
-	plyinitfun initfun;
-	plydeinitfun deinitfun;
-	plyactfun actfun;
-	plyfreefun freefun;
-	void *payload;
-} Player;
+class Minefield;
+template <class ConcretePlayer> class Player {
+	public:
+		void init(Minefield *f) {
+			static_cast<ConcretePlayer*>(this)->init(f);
+		}
+		void deinit(Minefield *f) {
+			static_cast<ConcretePlayer*>(this)->deinit(f);
+		}
+		Action **act(Minefield *f) {
+			return static_cast<ConcretePlayer*>(this)->act(f);
+		}
+		void free(Action **act) {
+			static_cast<ConcretePlayer*>(this)->free(act);
+		}
+};
 
 #endif

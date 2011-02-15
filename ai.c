@@ -4,27 +4,24 @@
 #include "Player.h"
 #include "Screen.h"
 
-bool allowcoordreset = 0;
-int nexttileidx_ = 0;
-
-static void giveup(Action *act) {
+void AI::giveup(Action *act) {
 	act->type = GIVEUP;
 }
 
-static bool hasnexttile(Minefield *f) {
-	return (allowcoordreset || nexttileidx_ < f->tilecount);
+bool AI::hasnexttile(Minefield *f) {
+	return (this->allowcoordreset || this->nexttileidx_ < f->tilecount);
 }
 
-static int nexttileidx(Minefield *f) {
-	if (nexttileidx_ < f->tilecount) {
-		return nexttileidx_++;
+int AI::nexttileidx(Minefield *f) {
+	if (this->nexttileidx_ < f->tilecount) {
+		return this->nexttileidx_++;
 	}
-	allowcoordreset = 0;
-	return nexttileidx_ = 0;
+	this->allowcoordreset = 0;
+	return this->nexttileidx_ = 0;
 }
 
 #define COUNTER(fun, cb) \
-static int fun(Minefield *f, int *neighbours) {\
+int AI::fun(Minefield *f, int *neighbours) {\
 	int i;\
 	int matches = 0;\
 	for (i = 0; i < f->maxneighbours; ++i) {\
@@ -39,7 +36,7 @@ static int fun(Minefield *f, int *neighbours) {\
 }
 
 #define FILTER(fun, cb) \
-static void fun(Minefield *f, int *c) {\
+void AI::fun(Minefield *f, int *c) {\
 	int dest = 0;\
 	int i;\
 	for (i = 0; i < f->maxneighbours; ++i) {\
@@ -63,7 +60,7 @@ COUNTER(countunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
 COUNTER(countflags, !!(tile->flags & TILE_FLAGGED))
 #undef CB
 
-static void neighbourdifference(Minefield *f, int *c, int *set) {
+void AI::neighbourdifference(Minefield *f, int *c, int *set) {
 	int i, j, k; /* i is read-index in c, j is write-index is c, k is read-index in set */
 	int length = f->maxneighbours;
 	for (i = 0, j = 0, k = 0; i < length; ++i) {
@@ -82,7 +79,7 @@ static void neighbourdifference(Minefield *f, int *c, int *set) {
 	}
 }
 
-#define ACT(method) static Action **method(Minefield *f, int idx)
+#define ACT(method) Action **AI::method(Minefield *f, int idx)
 #define GETTILE(tile) Tile *tile = &f->tiles[idx]
 
 ACT(act_singlecheck) {
@@ -120,7 +117,7 @@ ACT(act_singlecheck) {
 	return ret;
 }
 
-static bool issubset(int *superset, int *subset, int length) {
+bool AI::issubset(int *superset, int *subset, int length) {
 	int i, j; /* i is index in subset, j in superset */
 	for (i = 0, j = 0; i < length; ++i) {
 		int tofind = subset[i];
@@ -274,9 +271,9 @@ ACT(act_dualcheck) {
 #undef GETTILE
 #undef ACT
 
-static Action **act(Player *p, Minefield *f) {
+Action **AI::act(Minefield *f) {
 #define ACT(method) {\
-	Action **ret = method(f, idx);\
+	Action **ret = this->method(f, idx);\
 	if (ret != NULL) {\
 		if (f->sleep) {\
 			f->scr->resetmarks(f);\
@@ -286,7 +283,7 @@ static Action **act(Player *p, Minefield *f) {
 				f->scr->mark(f, ret[i]->tileidx, 2);\
 			}\
 		}\
-		allowcoordreset = 1;\
+		this->allowcoordreset = 1;\
 		/*\
 		char msg[256];\
 		snprintf(msg, 255, "AI used %s\n", #method);\
@@ -299,8 +296,8 @@ static Action **act(Player *p, Minefield *f) {
 }
 	// first, try the simple calculation on all tiles. act_singlecheck only calls
 	// neighbourhood() once and some counting functions per call.
-	while (hasnexttile(f)) {
-		int idx = nexttileidx(f);
+	while (this->hasnexttile(f)) {
+		int idx = this->nexttileidx(f);
 		ACT(act_singlecheck);
 	}
 	// once we've exhausted the playing field (run through from top to bottom
@@ -309,22 +306,22 @@ static Action **act(Player *p, Minefield *f) {
 	// each tile and once again for each tile's pressed neighbours. this is a
 	// slow operation! if we have a match, return it. next time, start over with
 	// simple calculations.
-	allowcoordreset = 1;
-	while (hasnexttile(f)) {
-		int idx = nexttileidx(f);
+	this->allowcoordreset = 1;
+	while (this->hasnexttile(f)) {
+		int idx = this->nexttileidx(f);
 		ACT(act_dualcheck);
 	}
 	// we've exhausted the playing field twice now. we give up since the board is
 	// ambiguous.
 	Action **res = new Action*[2];
 	res[0] = new Action;
-	giveup(res[0]);
+	this->giveup(res[0]);
 	res[1] = NULL;
 	return res;
 #undef ACT
 }
 
-static void actfree(Player *p, Action **act) {
+void AI::free(Action **act) {
 	int i = 0;
 	while (act[i] != NULL) {
 		delete act[i++];
@@ -332,15 +329,13 @@ static void actfree(Player *p, Action **act) {
 	delete act;
 }
 
-static void aiinit(Player *p, Minefield *f) {
+void AI::init(Minefield *f) {
 }
 
-static void aideinit(Player *p, Minefield *f) {
+void AI::deinit(Minefield *f) {
 }
 
-void AI(Player *ply, Minefield *f) {
-	Player ai = {&aiinit, &aideinit, &act, &actfree, NULL};
-	*ply = ai;
-	allowcoordreset = 0;
-	nexttileidx_ = 0;
+AI::AI(Minefield *f) {
+	this->allowcoordreset = 0;
+	this->nexttileidx_ = 0;
 }
