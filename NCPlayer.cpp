@@ -12,28 +12,28 @@ const char deckeys[] = "awji";
 void NCPlayer::setcursor(Minefield *f, WINDOW *scr) {
 	NCply *d = this->payload;
 	int idx = d->cursidx;
-	f->scr->resetmarks(f);
-	f->scr->mark(f, idx, 1);
+	//f->scr->resetmarks(f);
+	//f->scr->mark(f, idx, 1);
 	int neighbours[f->maxneighbours];
 	f->neighbourhood(idx, neighbours);
 	int i;
 	for (i = 0; i < f->maxneighbours; ++i) {
 		int n = neighbours[i];
 		if (n == -1) continue;
-		f->scr->mark(f, n, 2);
+		//f->scr->mark(f, n, 2);
 	}
 	wrefresh(scr);
 }
 
 Action **NCPlayer::act(Minefield *f) {
-	GETSCR(f, scr);
+	//GETSCR(f, scr);
 	NCply *d = (NCply *) this->payload;
 	Action *act = new Action;
 	Action **res = new Action*[2];
 	res[0] = act;
 	res[1] = NULL;
 	while (1) {
-		this->setcursor(f, scr);
+		//this->setcursor(f, scr);
 		int ch = getch();
 		if (ch == 'q') {
 			act->type = GIVEUP;
@@ -49,7 +49,7 @@ Action **NCPlayer::act(Minefield *f) {
 		} else if (ch == 'z') {
 			f->tiles[d->cursidx].flags ^= TILE_MINE;
 			f->recalcneighbours();
-			f->printfield();
+			f->redrawfield();
 		} else {
 			int i;
 			for (i = 0; inckeys[i] != '\0' && deckeys[i] != '\0' && i < f->dimcount; ++i) {

@@ -230,6 +230,17 @@ void Minefield::checkstate() {
 	}
 }
 
+void Minefield::redrawtile(int idx) {
+	if (this->redrawtiles == NULL) {
+		this->redrawtiles = new std::queue<int>();
+	}
+	this->redrawtiles->push(idx);
+}
+
+void Minefield::redrawfield() {
+	this->shouldredrawfield = true;
+}
+
 void ripple_push(PressRipple *r, int idx) {
 	if ((r->last+1) % r->length == r->first) {r->overflow = 1; return;}
 	r->tilestart[r->last] = idx;
@@ -266,7 +277,7 @@ bool Minefield::simplepress(int idx) {
 		return 1;
 	}
 	++this->presseds;
-	this->scr->updatetile(this, idx);
+	this->redrawtile(idx);
 	this->checkstate();
 	return 1;
 }
@@ -324,12 +335,11 @@ void Minefield::flag(int idx) {
 	if (tile->flags & TILE_FLAGGED) return;
 	++this->flaggeds;
 	tile->flags |= TILE_FLAGGED;
-	this->scr->updatetile(this, idx);
+	this->redrawtile(idx);
 }
 
-void Minefield::printfield() {
+void Minefield::printfield(char *output) {
 	int w = this->outputwidth, h = this->outputheight;
-	char output[(w+1)*h];
 	{
 		int row;
 		for (row = 0; row < h; ++row) {
@@ -349,7 +359,6 @@ void Minefield::printfield() {
 		}
 	}
 	output[(w+1)*h] = '\0';
-	this->scr->updatefield(this, output);
 }
 
 void Minefield::pressrandom(bool blanksonly) {
@@ -403,7 +412,7 @@ int Minefield::main(int argc, char *argv[]) {
 		exit(1);
 	}
 	bool hasseed = 0;
-	bool ai = 1;
+	this->ai = 1;
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -468,7 +477,7 @@ int Minefield::main(int argc, char *argv[]) {
 		} else if (!strcmp(arg, "--silent")) {
 			screentype = SCREEN_SILENT;
 		} else if (!strcmp(arg, "--manual")) {
-			ai = 0;
+			this->ai = 0;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			this->sleep = 1;
 		}
@@ -483,37 +492,43 @@ int Minefield::main(int argc, char *argv[]) {
 	}
 	srand(this->seed);
 
-	this->scr = new NCScreen(this);
-	/*
 	switch (screentype) {
-		case SCREEN_NCURSES:
-			ncscreen(&scr, this);
-			break;
+		//case SCREEN_NCURSES:
+		default:
+			NCScreen *scr = new NCScreen(this);
+			this->playscreen(scr);
+			delete scr;
+			/*
 		case SCREEN_SILENT:
 			silentscreen(&scr, this);
 			break;
 		default:
 			dumbscreen(&scr, this);
 			break;
+			*/
 	}
-	*/
+	return 0;
+}
+
+template <class ConcreteScreen>
+void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
 	this->alloctiles();
 	this->resettiles();
 	this->calcmines();
 	this->setmines();
 	this->pressrandom(1);
-	this->scr->init(this);
-	this->scr->speak(this, "Seed: %u\n", this->seed);
-	this->printfield();
+	scr->init(this);
+	scr->speak(this, "Seed: %u\n", this->seed);
+	this->redrawfield();
 	this->state = STATE_PLAY;
 
-	if (ai) {
+	if (this->ai) {
 		Player<AI> *ply = new AI(this);
-		this->playgame(ply);
+		this->playgame(scr, ply);
 		delete ply;
 	} else {
 		Player<NCPlayer> *ply = new NCPlayer(this);
-		this->playgame(ply);
+		this->playgame(scr, ply);
 		delete ply;
 	}
 
@@ -533,9 +548,9 @@ int Minefield::main(int argc, char *argv[]) {
 	if (this->sleep) usleep(800000);
 	scr->deinit(this);
 	if (this->expect != NULL) {
-		return strcmp(expect, this->expect) ? 1 : 0;
+		exit(strcmp(expect, this->expect) ? 1 : 0);
 	}
-	printf("To reproduce:\n%s", argv[0]);
+	printf("To reproduce, run with ");
 	{
 		Dimension d;
 		for (d = this->dimcount; d && d--;) {
@@ -549,11 +564,10 @@ int Minefield::main(int argc, char *argv[]) {
 	delete (this->dimensions);
 	delete (this->dimensionproducts);
 	delete (this);
-	return 0;
 }
 
-template <class ConcretePlayer>
-void Minefield::playgame(Player<ConcretePlayer> *ply) {
+template <class ConcreteScreen, class ConcretePlayer>
+void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *ply) {
 	ply->init(this);
 	while (this->state == STATE_PLAY) {
 		Action **act = ply->act(this);
@@ -572,8 +586,22 @@ void Minefield::playgame(Player<ConcretePlayer> *ply) {
 				this->flag(tileidx);
 			}
 		}
+		if (this->redrawtiles != NULL) {
+			while (!this->redrawtiles->empty()) {
+				scr->updatetile(this, this->redrawtiles->front());
+				this->redrawtiles->pop();
+			}
+		}
+		if (this->shouldredrawfield) {
+			char output[(this->outputwidth+1) * this->outputheight];
+			this->printfield(output);
+			scr->updatefield(this, output);
+			this->shouldredrawfield = false;
+		}
 		if (giveup || this->state != STATE_PLAY) {
-			this->printfield();
+			char output[(this->outputwidth+1) * this->outputheight];
+			this->printfield(output);
+			scr->updatefield(this, output);
 		}
 		ply->free(act);
 		if (giveup) break;

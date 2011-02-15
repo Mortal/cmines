@@ -3,7 +3,11 @@ DEBUG=1
 ifeq ($(DEBUG),)
 	OPTS=-Wall -O3
 else
-	OPTS=-Wall -ggdb -DDEBUG
+	ifeq ($(PROFILE),)
+		OPTS=-Wall -ggdb -DDEBUG
+	else
+		OPTS=-Wall -pg
+	endif
 endif
 
 .cpp.o:

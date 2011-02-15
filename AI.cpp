@@ -128,40 +128,6 @@ bool AI::issubset(int *superset, int *subset, int length) {
 	return 1;
 }
 
-#ifdef DEBUG
-/* aid in debugging with gdb */
-void printtile(Minefield *f, int idx) {
-	NCScreen *s = f->scr;
-	const int l = 512;
-	char msg[l];
-	int i = 0;
-	Tile *t = &f->tiles[idx];
-	Coordinate *coords = f->idxtocoords(idx);
-	Dimension d;
-	for (d = 0; d < f->dimcount; ++d) {
-		i += snprintf(msg+i, l-i, "%d,", coords[d]); if (i >= l) break;
-	}
-	msg[l-1] = 0;
-	s->speak(f, "%s neighbours=%d flags=%x\n", msg, t->neighbours, t->flags);
-}
-
-void printtiles(Minefield *f, int *tiles) {
-	int count = 0;
-	int i;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		if (tiles[i] == -1) continue;
-		int idx = tiles[i];
-		printtile(f, idx);
-		++count;
-	}
-	//printf("%d tiles\n", count);
-}
-#else
-void printtile(Minefield *f, int idx) {
-}
-void printtiles(Minefield *f, int *tiles) {
-}
-#endif
 
 ACT(act_dualcheck) {
 	GETTILE(a);
@@ -275,6 +241,7 @@ Action **AI::act(Minefield *f) {
 #define ACT(method) {\
 	Action **ret = this->method(f, idx);\
 	if (ret != NULL) {\
+		/*\
 		if (f->sleep) {\
 			f->scr->resetmarks(f);\
 			f->scr->mark(f, idx, 1);\
@@ -283,6 +250,7 @@ Action **AI::act(Minefield *f) {
 				f->scr->mark(f, ret[i]->tileidx, 2);\
 			}\
 		}\
+		*/\
 		this->allowcoordreset = 1;\
 		/*\
 		char msg[256];\

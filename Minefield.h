@@ -18,6 +18,8 @@
 #include "Screen.h"
 #include "ncscreen.h"
 
+#include <queue>
+
 char tilechar(Tile *tile);
 
 typedef struct {
@@ -72,9 +74,6 @@ public:
 	/* whether we should sleep occasionally */
 	bool sleep;
 
-	/* Screen functions */
-	NCScreen *scr;
-
 	/* seed passed to srand() before generating the minefield. */
 	unsigned int seed;
 
@@ -105,13 +104,18 @@ public:
 	void calcmines();
 	void setmines();
 	void recalcneighbours();
-	void printfield();
+	void printfield(char *);
+
+	void redrawtile(int idx);
+	void redrawfield();
 
 	int main(int argc, char *argv[]);
 
 private:
-	template <class ConcretePlayer>
-	void playgame(class Player<ConcretePlayer> *ply);
+	template <class ConcreteScreen>
+	void playscreen(class Screen<ConcreteScreen> *scr);
+	template <class ConcreteScreen, class ConcretePlayer>
+	void playgame(class Screen<ConcreteScreen> *scr, class Player<ConcretePlayer> *ply);
 
 	/* Check if the game is over */
 	void checkstate();
@@ -128,6 +132,11 @@ private:
 	void pressblanks();
 
 	void flag(int idx);
+
+	bool ai; /* use AI? */
+
+	std::queue<int> *redrawtiles;
+	bool shouldredrawfield;
 };
 
 #endif
