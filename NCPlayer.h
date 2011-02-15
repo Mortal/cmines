@@ -18,7 +18,7 @@ class NCPlayer : public Player<NCPlayer> {
 		void free(Action **);
 
 	private:
-		void setcursor(Minefield *f, WINDOW *scr);
+		void setcursor(Minefield *f);
 		NCply *payload;
 };
 

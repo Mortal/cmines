@@ -4,7 +4,8 @@
 enum ActionType {
 	PRESS,
 	FLAG,
-	GIVEUP
+	GIVEUP,
+	NOOP
 };
 
 typedef struct {

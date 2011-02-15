@@ -124,6 +124,8 @@ private:
 
 	void flag(int idx);
 
+	template <class ConcreteScreen> void flushredraws(Screen<ConcreteScreen> *);
+
 	bool ai; /* use AI? */
 
 	std::queue<int> *redrawtiles;

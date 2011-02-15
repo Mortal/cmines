@@ -580,10 +580,38 @@ void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
 	delete (this);
 }
 
+template <class ConcreteScreen>
+void Minefield::flushredraws(Screen<ConcreteScreen> *scr) {
+	if (this->shouldredrawfield) {
+		char output[(this->outputwidth+1) * this->outputheight];
+		this->printfield(output);
+		scr->updatefield(this, output);
+		this->shouldredrawfield = false;
+	}
+	if (this->redrawtiles != NULL) {
+		while (!this->redrawtiles->empty()) {
+			scr->updatetile(this, this->redrawtiles->front());
+			this->redrawtiles->pop();
+		}
+	}
+	if (this->shouldresetmarks) {
+		scr->resetmarks(this);
+		this->shouldresetmarks = false;
+	}
+	if (this->marks != NULL) {
+		while (!this->marks->empty()) {
+			Mark *m = this->marks->front();
+			scr->mark(this, m->idx, m->mark);
+			this->marks->pop();
+		}
+	}
+}
+
 template <class ConcreteScreen, class ConcretePlayer>
 void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *ply) {
 	ply->init(this);
 	while (this->state == STATE_PLAY) {
+		this->flushredraws(scr);
 		Action **act = ply->act(this);
 		bool giveup = 0;
 		int i = 0;
@@ -593,6 +621,9 @@ void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *pl
 				giveup = 1;
 				break;
 			}
+			if (a->type == NOOP) {
+				continue;
+			}
 			int tileidx = a->tileidx;
 			if (a->type == PRESS) {
 				this->press(tileidx);
@@ -600,34 +631,10 @@ void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *pl
 				this->flag(tileidx);
 			}
 		}
-		if (this->redrawtiles != NULL) {
-			while (!this->redrawtiles->empty()) {
-				scr->updatetile(this, this->redrawtiles->front());
-				this->redrawtiles->pop();
-			}
-		}
-		if (this->shouldredrawfield) {
-			char output[(this->outputwidth+1) * this->outputheight];
-			this->printfield(output);
-			scr->updatefield(this, output);
-			this->shouldredrawfield = false;
-		}
-		if (this->marks != NULL) {
-			while (!this->marks->empty()) {
-				Mark *m = this->marks->front();
-				scr->mark(this, m->idx, m->mark);
-				this->marks->pop();
-			}
-		}
-		if (this->shouldresetmarks) {
-			scr->resetmarks(this);
-			this->shouldresetmarks = false;
-		}
 		if (giveup || this->state != STATE_PLAY) {
-			char output[(this->outputwidth+1) * this->outputheight];
-			this->printfield(output);
-			scr->updatefield(this, output);
+			this->redrawfield();
 		}
+		this->flushredraws(scr);
 		ply->free(act);
 		if (giveup) break;
 	}
