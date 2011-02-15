@@ -90,7 +90,7 @@ ACT(act_singlecheck) {
 	if (!(tile->flags & TILE_PRESSED)) return NULL;
 	if (!tile->neighbours) return NULL;
 	int neighbours[f->maxneighbours];
-	neighbourhood(f, idx, (int *) neighbours);
+	f->neighbourhood(idx, (int *) neighbours);
 	int neighbourunknown = countunknown(f, (int *) neighbours);
 	if (!neighbourunknown) return NULL;
 	int neighbourflags = countflags(f, (int *) neighbours);
@@ -139,7 +139,7 @@ void printtile(Minefield *f, int idx) {
 	char msg[l];
 	int i = 0;
 	Tile *t = &f->tiles[idx];
-	Coordinate *coords = idxtocoords(f, idx);
+	Coordinate *coords = f->idxtocoords(idx);
 	Dimension d;
 	for (d = 0; d < f->dimcount; ++d) {
 		i += snprintf(msg+i, l-i, "%d,", coords[d]); if (i >= l) break;
@@ -178,7 +178,7 @@ ACT(act_dualcheck) {
 
 	// get a's neighbourhood
 	int an[f->maxneighbours];
-	neighbourhood(f, idx, (int *) an);
+	f->neighbourhood(idx, (int *) an);
 
 	// get a's bomb neighbour count minus already flagged bombs
 	int anb = a->neighbours;
@@ -213,7 +213,7 @@ ACT(act_dualcheck) {
 
 			// get b's neighbourhood
 			int bn[f->maxneighbours];
-			neighbourhood(f, bidx, (int *) bn);
+			f->neighbourhood(bidx, (int *) bn);
 
 			// get b's bomb neighbour count minus already flagged bombs
 			int bnb = b->neighbours;

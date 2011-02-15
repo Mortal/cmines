@@ -17,7 +17,16 @@
 
 char tilechar(Tile *tile);
 
-typedef struct _Minefield {
+typedef struct {
+	int *tilestart;
+	int length;
+	int first;
+	int last;
+	bool overflow;
+} PressRipple;
+
+class Minefield {
+public:
 	/* Field dimensions, most significant dimension first.
 	 * I.e. {..., height, width}. */
 	Coordinate *dimensions;
@@ -68,32 +77,51 @@ typedef struct _Minefield {
 
 	/* expected result (arbitrary string) */
 	const char *expect;
-} Minefield;
 
-/* Get the column and row of the tile in the terminal/ncurses output. */
-int outputcolumn(Minefield *, Coordinate *tile);
-int outputrow(Minefield *, Coordinate *tile);
+	/* Get the column and row of the tile in the terminal/ncurses output. */
+	int outputcolumn(Coordinate *tile);
+	int outputrow(Coordinate *tile);
 
-/* Convert tile index to coordinates. Returns a pointer into the huge
- * `coordinatesets' array. */
-Coordinate *idxtocoords(Minefield *, int idx);
+	/* Convert tile index to coordinates. Returns a pointer into the huge
+	 * `coordinatesets' array. */
+	Coordinate *idxtocoords(int idx);
 
-/* Convert coordinates to tile index. When passed a pointer into
- * `coordinatesets', calculates index by pointer arithmetic. */
-int coordstoidx(Minefield *, Coordinate *c);
+	/* Convert coordinates to tile index. When passed a pointer into
+	 * `coordinatesets', calculates index by pointer arithmetic. */
+	int coordstoidx(Coordinate *c);
 
-/* Get the neighbouring indices of the tile at the given index and store them
- * in `neighbours'. This output array should contain at least `maxneighbours'
- * pointers to Coordinate sets, initially set to zero. */
-void neighbourhood(Minefield *, int idx, int *neighbours);
+	/* Get the neighbouring indices of the tile at the given index and store them
+	 * in `neighbours'. This output array should contain at least `maxneighbours'
+	 * pointers to Coordinate sets, initially set to zero. */
+	void neighbourhood(int idx, int *neighbours);
 
-/* Various functions to initialise the global variables and create the game
- * field. */
-void alloctiles(Minefield *);
-void resettiles(Minefield *);
-void calcmines(Minefield *);
-void setmines(Minefield *);
-void recalcneighbours(Minefield *);
-void printfield(Minefield *);
+	/* Various functions to initialise the global variables and create the game
+	 * field. */
+	void alloctiles();
+	void resettiles();
+	void calcmines();
+	void setmines();
+	void recalcneighbours();
+	void printfield();
+
+	int main(int argc, char *argv[]);
+
+private:
+	/* Check if the game is over */
+	void checkstate();
+
+	/* neighbourhood helper */
+	void neighbourhood2(int root, int *neighbours, Dimension d, int times);
+
+	void press(int idx);
+	bool simplepress(int idx);
+	void ripplepress(PressRipple *);
+	void handlepressoverflow();
+
+	void pressrandom(bool blanksonly);
+	void pressblanks();
+
+	void flag(int idx);
+};
 
 #endif

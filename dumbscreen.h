@@ -2,7 +2,9 @@
 #define DUMBSCREEN_H
 
 #include <ncurses.h>
+#include "cmines.h"
+#include "Screen.h"
 
-void dumbscreen(struct _Screen *, struct _Minefield *);
+void dumbscreen(Screen *, Minefield *);
 
 #endif

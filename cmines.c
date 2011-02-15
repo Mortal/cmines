@@ -24,219 +24,211 @@ char tilechar(Tile *tile) {
 	return 'Z';
 }
 
-int outputcolumn(Minefield *f, Coordinate *tile) {
+int Minefield::outputcolumn(Coordinate *tile) {
 	int factor = 1;
 	int sum = 0;
-	Dimension d = f->dimcount-1;
+	Dimension d = this->dimcount-1;
 	while (1) {
 		sum += tile[d]*factor;
 		if (d < 2) break;
-		factor *= f->dimensions[d];
+		factor *= this->dimensions[d];
 		++factor;
 		d -= 2;
 	}
 	return sum;
 }
 
-int outputrow(Minefield *f, Coordinate *tile) {
+int Minefield::outputrow(Coordinate *tile) {
 	int factor = 1;
 	int sum = 0;
-	Dimension d = f->dimcount-2;
+	Dimension d = this->dimcount-2;
 	while (1) {
 		sum += tile[d]*factor;
 		if (d < 2) break;
-		factor *= f->dimensions[d];
+		factor *= this->dimensions[d];
 		++factor;
 		d -= 2;
 	}
 	return sum;
 }
 
-void alloctiles(Minefield *f) {
-	if (f->tiles != NULL) {
-		delete f->tiles;
-		f->tiles = NULL;
+void Minefield::alloctiles() {
+	if (this->tiles != NULL) {
+		delete this->tiles;
+		this->tiles = NULL;
 	}
-	if (f->coordinatesets != NULL) {
-		delete f->coordinatesets;
-		f->coordinatesets = NULL;
+	if (this->coordinatesets != NULL) {
+		delete this->coordinatesets;
+		this->coordinatesets = NULL;
 	}
 	int i;
-	f->tilecount = 1;
-	f->maxneighbours = 1;
-	for (i = 0; i < f->dimcount; ++i) {
-		f->tilecount *= f->dimensions[i];
-		f->maxneighbours *= 3;
+	this->tilecount = 1;
+	this->maxneighbours = 1;
+	for (i = 0; i < this->dimcount; ++i) {
+		this->tilecount *= this->dimensions[i];
+		this->maxneighbours *= 3;
 	}
-	f->tiles = new Tile[f->tilecount];
-	if (f->tiles == NULL) {
-		printf("Not enough memory to allocate %d tiles!\n", f->tilecount);
+	this->tiles = new Tile[this->tilecount];
+	if (this->tiles == NULL) {
+		printf("Not enough memory to allocate %d tiles!\n", this->tilecount);
 		exit(2);
 	}
 	Tile tile;
-	for (i = 0; i < f->tilecount; ++i) {
-		f->tiles[i] = tile;
+	for (i = 0; i < this->tilecount; ++i) {
+		this->tiles[i] = tile;
 	}
-	f->coordinatesets = new Coordinate[f->tilecount*f->dimcount];
-	for (i = 0; i < f->dimcount; ++i) {
-		f->coordinatesets[i] = 0;
+	this->coordinatesets = new Coordinate[this->tilecount*this->dimcount];
+	for (i = 0; i < this->dimcount; ++i) {
+		this->coordinatesets[i] = 0;
 	}
-	Coordinate *prev = idxtocoords(f, 0);
-	for (i = 1; i < f->tilecount; ++i) {
-		Coordinate *cur = idxtocoords(f, i);
+	Coordinate *prev = this->idxtocoords(0);
+	for (i = 1; i < this->tilecount; ++i) {
+		Coordinate *cur = this->idxtocoords(i);
 		int j, carry = 1;
-		for (j = f->dimcount; j--;) {
+		for (j = this->dimcount; j--;) {
 			cur[j] = prev[j]+carry;
-			carry = cur[j]/f->dimensions[j];
-			cur[j] %= f->dimensions[j];
+			carry = cur[j]/this->dimensions[j];
+			cur[j] %= this->dimensions[j];
 		}
 		prev = cur;
 	}
-	f->outputheight = outputrow(f, idxtocoords(f, f->tilecount-1))+1;
-	f->outputwidth = outputcolumn(f, idxtocoords(f, f->tilecount-1))+1;
+	this->outputheight = this->outputrow(this->idxtocoords(this->tilecount-1))+1;
+	this->outputwidth = this->outputcolumn(this->idxtocoords(this->tilecount-1))+1;
 }
 
-Coordinate *idxtocoords(Minefield *f, int idx) {
+Coordinate *Minefield::idxtocoords(int idx) {
 #ifdef DEBUG
-	assert(idx >= 0 && idx <= f->tilecount);
+	assert(idx >= 0 && idx <= this->tilecount);
 #endif
-	return f->coordinatesets+idx*f->dimcount;
+	return this->coordinatesets+idx*this->dimcount;
 }
 
-int coordstoidx(Minefield *f, Coordinate *c) {
-	if (c >= f->coordinatesets && c < f->coordinatesets+f->dimcount*f->tilecount) {
-		return (c-f->coordinatesets)/f->dimcount;
+int Minefield::coordstoidx(Coordinate *c) {
+	if (c >= this->coordinatesets && c < this->coordinatesets+this->dimcount*this->tilecount) {
+		return (c-this->coordinatesets)/this->dimcount;
 	}
 	int idx = 0;
 	int i;
-	for (i = 0; i < f->dimcount; ++i) {
-		idx *= f->dimensions[i];
+	for (i = 0; i < this->dimcount; ++i) {
+		idx *= this->dimensions[i];
 		idx += c[i];
 	}
 	return idx;
 }
 
-void neighbourhood2(Minefield *f, int root, int *neighbours, Dimension d, int times) {
-	if (d >= f->dimcount) return;
-	int i, inc = f->maxneighbours/times;
-	for (i = 0; i < f->maxneighbours; i += 3*inc) {
+void Minefield::neighbourhood2(int root, int *neighbours, Dimension d, int times) {
+	if (d >= this->dimcount) return;
+	int i, inc = this->maxneighbours/times;
+	for (i = 0; i < this->maxneighbours; i += 3*inc) {
 		int input = neighbours[i];
 		if (input == -1) continue;
 		int i2 = i + inc;
 		int i3 = i2 + inc;
 		neighbours[i2] = input;
-		Coordinate *basis = idxtocoords(f, input);
+		Coordinate *basis = this->idxtocoords(input);
 		if (basis[d]) {
-			neighbours[i] = input - f->dimensionproducts[d];
+			neighbours[i] = input - this->dimensionproducts[d];
 		} else {
 			neighbours[i] = -1;
 		}
-		if (1+basis[d] < f->dimensions[d]) {
-			neighbours[i3] = input + f->dimensionproducts[d];
+		if (1+basis[d] < this->dimensions[d]) {
+			neighbours[i3] = input + this->dimensionproducts[d];
 		} else {
 			neighbours[i3] = -1;
 		}
 		if (inc == 1 && neighbours[i2] == root) neighbours[i2] = -1;
 	}
-	neighbourhood2(f, root, neighbours, d+1, times*3);
+	this->neighbourhood2(root, neighbours, d+1, times*3);
 }
 
-void neighbourhood(Minefield *f, int root, int *neighbours) {
-	memset(neighbours, -1, sizeof(int)*(f->maxneighbours));
+void Minefield::neighbourhood(int root, int *neighbours) {
+	memset(neighbours, -1, sizeof(int)*(this->maxneighbours));
 	neighbours[0] = root;
-	neighbourhood2(f, root, neighbours, 0, 3);
+	this->neighbourhood2(root, neighbours, 0, 3);
 	return;
 
 	int idx = 0;
 	Dimension dim;
-	for (dim = 0; dim < f->dimcount; ++dim) {
+	for (dim = 0; dim < this->dimcount; ++dim) {
 		int tile = root;
 		int i;
 		int l = idx;
 		for (i = 0; tile == root || i < l; tile = neighbours[(tile == root) ? i : ++i]) {
-			Coordinate *basis = idxtocoords(f, tile);
+			Coordinate *basis = this->idxtocoords(tile);
 			if (basis[dim]) {
-				int i2 = tile-f->dimensionproducts[dim];
+				int i2 = tile-this->dimensionproducts[dim];
 				neighbours[idx] = i2;
 				idx++;
 			}
-			if (1+basis[dim] < f->dimensions[dim]) {
-				int i2 = tile+f->dimensionproducts[dim];
+			if (1+basis[dim] < this->dimensions[dim]) {
+				int i2 = tile+this->dimensionproducts[dim];
 				neighbours[idx] = i2;
 				idx++;
 			}
 		}
 	}
-	for (; idx < f->maxneighbours; ++idx) {
+	for (; idx < this->maxneighbours; ++idx) {
 		neighbours[idx] = -1;
 	}
 }
 
-void resettiles(Minefield *f) {
+void Minefield::resettiles() {
 	int i;
-	for (i = 0; i < f->tilecount; ++i) {
-		f->tiles[i].flags = 0;
-		f->tiles[i].neighbours = 0;
+	for (i = 0; i < this->tilecount; ++i) {
+		this->tiles[i].flags = 0;
+		this->tiles[i].neighbours = 0;
 	}
-	f->presseds = 0;
-	f->flaggeds = 0;
+	this->presseds = 0;
+	this->flaggeds = 0;
 }
 
-void calcmines(Minefield *f) {
-	if (f->automines)
-		f->mines = f->tilecount/(f->effectivedimcount*f->effectivedimcount*f->effectivedimcount);
+void Minefield::calcmines() {
+	if (this->automines)
+		this->mines = this->tilecount/(this->effectivedimcount*this->effectivedimcount*this->effectivedimcount);
 }
 
-void setmines(Minefield *f) {
+void Minefield::setmines() {
 	int i;
-	for (i = 0; i < f->mines; ++i) {
-		int j, idx = rand()%(f->tilecount-i);
+	for (i = 0; i < this->mines; ++i) {
+		int j, idx = rand()%(this->tilecount-i);
 		for (j = 0; j <= idx; ++j) {
-			if (f->tiles[j].flags & TILE_MINE) ++idx;
+			if (this->tiles[j].flags & TILE_MINE) ++idx;
 		}
 #ifdef DEBUG
-		assert(idx < f->tilecount);
+		assert(idx < this->tilecount);
 #endif
-		f->tiles[idx].flags |= TILE_MINE;
-		int neighbours[f->maxneighbours];
-		neighbourhood(f, idx, (int *) neighbours);
-		for (j = 0; j < f->maxneighbours; ++j) {
+		this->tiles[idx].flags |= TILE_MINE;
+		int neighbours[this->maxneighbours];
+		this->neighbourhood(idx, (int *) neighbours);
+		for (j = 0; j < this->maxneighbours; ++j) {
 			if (-1 == neighbours[j]) continue;
-			++f->tiles[neighbours[j]].neighbours;
+			++this->tiles[neighbours[j]].neighbours;
 		}
 	}
 }
 
-void recalcneighbours(Minefield *f) {
+void Minefield::recalcneighbours() {
 	int i;
-	for (i = 0; i < f->tilecount; ++i) {
-		f->tiles[i].neighbours = 0;
+	for (i = 0; i < this->tilecount; ++i) {
+		this->tiles[i].neighbours = 0;
 	}
-	for (i = 0; i < f->tilecount; ++i) {
-		if (!(f->tiles[i].flags & TILE_MINE)) continue;
-		int neighbours[f->maxneighbours];
-		neighbourhood(f, i, (int *) neighbours);
+	for (i = 0; i < this->tilecount; ++i) {
+		if (!(this->tiles[i].flags & TILE_MINE)) continue;
+		int neighbours[this->maxneighbours];
+		this->neighbourhood(i, (int *) neighbours);
 		int j;
-		for (j = 0; j < f->maxneighbours; ++j) {
+		for (j = 0; j < this->maxneighbours; ++j) {
 			if (-1 == neighbours[j]) continue;
-			++f->tiles[neighbours[j]].neighbours;
+			++this->tiles[neighbours[j]].neighbours;
 		}
 	}
 }
 
-void checkstate(Minefield *f) {
-	if (f->mines+f->presseds >= f->tilecount) {
-		f->state = STATE_WON;
+void Minefield::checkstate() {
+	if (this->mines+this->presseds >= this->tilecount) {
+		this->state = STATE_WON;
 	}
 }
-
-typedef struct {
-	int *tilestart;
-	int length;
-	int first;
-	int last;
-	bool overflow;
-} PressRipple;
 
 void ripple_push(PressRipple *r, int idx) {
 	if ((r->last+1) % r->length == r->first) {r->overflow = 1; return;}
@@ -252,11 +244,11 @@ int ripple_pop(PressRipple *r) {
 	return val;
 }
 
-bool simplepress(Minefield *f, int idx) {
+bool Minefield::simplepress(int idx) {
 #ifdef DEBUG
-	assert(idx >= 0 && idx <= f->tilecount);
+	assert(idx >= 0 && idx <= this->tilecount);
 #endif
-	Tile *tile = &f->tiles[idx];
+	Tile *tile = &this->tiles[idx];
 	if (tile->flags & TILE_PRESSED) return 0;
 #ifdef DEBUG
 	assert(!(tile->flags & TILE_PRESSED));
@@ -267,51 +259,51 @@ bool simplepress(Minefield *f, int idx) {
 	assert(tile->flags & TILE_PRESSED);
 #endif
 	if (tile->flags & TILE_MINE) {
-		if (f->state == STATE_INIT) {
+		if (this->state == STATE_INIT) {
 			printf("Pressed a mine during init!\n");
 		}
-		f->state = STATE_LOST;
+		this->state = STATE_LOST;
 		return 1;
 	}
-	++f->presseds;
-	f->scr->updatetile(f, idx);
-	checkstate(f);
+	++this->presseds;
+	this->scr->updatetile(this, idx);
+	this->checkstate();
 	return 1;
 }
 
-void ripplepress(Minefield *f, PressRipple *r) {
+void Minefield::ripplepress(PressRipple *r) {
 	int idx = ripple_pop(r);
-	if (!simplepress(f, idx)) return;
-	Tile *tile = &f->tiles[idx];
+	if (!this->simplepress(idx)) return;
+	Tile *tile = &this->tiles[idx];
 	if (tile->neighbours || r->overflow) return;
-	int neighbours[f->maxneighbours];
-	neighbourhood(f, idx, (int *) neighbours);
+	int neighbours[this->maxneighbours];
+	this->neighbourhood(idx, (int *) neighbours);
 	int i;
-	for (i = 0; !r->overflow && i < f->maxneighbours; ++i) {
+	for (i = 0; !r->overflow && i < this->maxneighbours; ++i) {
 		if (neighbours[i] == -1) continue;
 		ripple_push(r, neighbours[i]);
 	}
 }
 
-static void handlepressoverflow(Minefield *f) {
+void Minefield::handlepressoverflow() {
 	bool allowreset = 0;
 	int idx;
-	for (idx = 0; idx < f->tilecount || (allowreset && !(idx = 0) && !(allowreset = 0)); ++idx) {
-		Tile *t = &f->tiles[idx];
+	for (idx = 0; idx < this->tilecount || (allowreset && !(idx = 0) && !(allowreset = 0)); ++idx) {
+		Tile *t = &this->tiles[idx];
 		if (!(t->flags & TILE_PRESSED) || t->flags & TILE_FLAGGED || t->neighbours) continue;
-		int neighbours[f->maxneighbours];
-		neighbourhood(f, idx, (int *) neighbours);
+		int neighbours[this->maxneighbours];
+		this->neighbourhood(idx, (int *) neighbours);
 		int i;
-		for (i = 0; i < f->maxneighbours; ++i) {
+		for (i = 0; i < this->maxneighbours; ++i) {
 			if (neighbours[i] == -1) continue;
-			if (simplepress(f, neighbours[i])) allowreset = 1;
+			if (this->simplepress(neighbours[i])) allowreset = 1;
 		}
 	}
 }
 
-void press(Minefield *f, int idx) {
+void Minefield::press(int idx) {
 #ifdef DEBUG
-	assert(idx >= 0 && idx <= f->tilecount);
+	assert(idx >= 0 && idx <= this->tilecount);
 #endif
 	PressRipple r;
 	int length = 1024;
@@ -321,22 +313,22 @@ void press(Minefield *f, int idx) {
 	r.first = r.last = 0;
 	ripple_push(&r, idx);
 	while (r.first != r.last) {
-		ripplepress(f, &r);
+		this->ripplepress(&r);
 	}
-	if (r.overflow) handlepressoverflow(f);
-	if (f->sleep) usleep(100000);
+	if (r.overflow) this->handlepressoverflow();
+	if (this->sleep) usleep(100000);
 }
 
-void flag(Minefield *f, int idx) {
-	Tile *tile = &f->tiles[idx];
+void Minefield::flag(int idx) {
+	Tile *tile = &this->tiles[idx];
 	if (tile->flags & TILE_FLAGGED) return;
-	++f->flaggeds;
+	++this->flaggeds;
 	tile->flags |= TILE_FLAGGED;
-	f->scr->updatetile(f, idx);
+	this->scr->updatetile(this, idx);
 }
 
-void printfield(Minefield *f) {
-	int w = f->outputwidth, h = f->outputheight;
+void Minefield::printfield() {
+	int w = this->outputwidth, h = this->outputheight;
 	char output[(w+1)*h];
 	{
 		int row;
@@ -350,41 +342,41 @@ void printfield(Minefield *f) {
 	}
 	{
 		int idx;
-		for (idx = 0; idx < f->tilecount; ++idx) {
-			int row = outputrow(f, idxtocoords(f, idx));
-			int column = outputcolumn(f, idxtocoords(f, idx));
-			output[row*(w+1)+column] = tilechar(f->tiles+idx);
+		for (idx = 0; idx < this->tilecount; ++idx) {
+			int row = this->outputrow(this->idxtocoords(idx));
+			int column = this->outputcolumn(this->idxtocoords(idx));
+			output[row*(w+1)+column] = tilechar(this->tiles+idx);
 		}
 	}
 	output[(w+1)*h] = '\0';
-	f->scr->updatefield(f, output);
+	this->scr->updatefield(this, output);
 }
 
-void pressrandom(Minefield *f, bool blanksonly) {
+void Minefield::pressrandom(bool blanksonly) {
 	int i;
 	int eligible = 0;
-	for (i = 0; i < f->tilecount; ++i) {
-		if (!(f->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !f->tiles[i].neighbours)) {
+	for (i = 0; i < this->tilecount; ++i) {
+		if (!(this->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !this->tiles[i].neighbours)) {
 			++eligible;
 		}
 	}
 	if (!eligible) return;
 	int idx = rand()%eligible;
-	for (i = 0; i < f->tilecount; ++i) {
-		if (!(f->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !f->tiles[i].neighbours)) {
+	for (i = 0; i < this->tilecount; ++i) {
+		if (!(this->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && (!blanksonly || !this->tiles[i].neighbours)) {
 			if (!idx--) {
-				press(f, i);
+				this->press(i);
 				return;
 			}
 		}
 	}
 }
 
-void pressblanks(Minefield *f) {
+void Minefield::pressblanks() {
 	int i;
-	for (i = 0; i < f->tilecount; ++i) {
-		if (!(f->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && !f->tiles[i].neighbours) {
-			press(f, i);
+	for (i = 0; i < this->tilecount; ++i) {
+		if (!(this->tiles[i].flags & (TILE_MINE|TILE_FLAGGED|TILE_PRESSED)) && !this->tiles[i].neighbours) {
+			this->press(i);
 		}
 	}
 }
@@ -398,10 +390,14 @@ bool isnumber(const char *c) {
 
 int main(int argc, char *argv[]) {
 	Minefield *f = new Minefield;
-	f->dimcount = 0;
-	f->automines = 1;
-	f->sleep = 0;
-	f->expect = NULL;
+	return f->main(argc, argv);
+}
+
+int Minefield::main(int argc, char *argv[]) {
+	this->dimcount = 0;
+	this->automines = 1;
+	this->sleep = 0;
+	this->expect = NULL;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
@@ -417,17 +413,17 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Invalid argument %d\n", dim);
 				exit(1);
 			} else if (dim > 1) {
-				++f->effectivedimcount;
+				++this->effectivedimcount;
 			}
-			++f->dimcount;
+			++this->dimcount;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed") || !strcmp(arg, "--expect")) {
 			// takes an argument, so skip that
 			++i;
 		}
 	}
-	f->dimensions = new Coordinate[f->dimcount];
-	f->dimensionproducts = new Coordinate[f->dimcount];
-	Dimension d = f->dimcount;
+	this->dimensions = new Coordinate[this->dimcount];
+	this->dimensionproducts = new Coordinate[this->dimcount];
+	Dimension d = this->dimcount;
 #define SCREEN_DUMB (0)
 #define SCREEN_NCURSES (1)
 #define SCREEN_SILENT (2)
@@ -439,11 +435,11 @@ int main(int argc, char *argv[]) {
 			int j;
 			--d;
 			if (i == 1) {
-				for (j = 0; j < d; ++j) f->dimensionproducts[j] = dim;
-				f->dimensionproducts[d] = 1;
+				for (j = 0; j < d; ++j) this->dimensionproducts[j] = dim;
+				this->dimensionproducts[d] = 1;
 			}
-			else for (j = 0; j < d; ++j) f->dimensionproducts[j] *= dim;
-			f->dimensions[d] = dim;
+			else for (j = 0; j < d; ++j) this->dimensionproducts[j] *= dim;
+			this->dimensions[d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
 			const char *arg2 = argv[i];
@@ -453,20 +449,20 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr, "Invalid argument %d\n", mines);
 					exit(1);
 				}
-				f->mines = mines;
-				f->automines = 0;
+				this->mines = mines;
+				this->automines = 0;
 			}
 		} else if (!strcmp(arg, "--seed")) {
 			++i;
 			const char *arg2 = argv[i];
 			if (isnumber(arg2)) {
 				int seed = strtol(arg2, NULL, 0);
-				f->seed = seed;
+				this->seed = seed;
 				hasseed = 1;
 			}
 		} else if (!strcmp(arg, "--expect")) {
 			++i;
-			f->expect = argv[i];
+			this->expect = argv[i];
 		} else if (!strcmp(arg, "--ncurses")) {
 			screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "--silent")) {
@@ -474,50 +470,50 @@ int main(int argc, char *argv[]) {
 		} else if (!strcmp(arg, "--manual")) {
 			ai = 0;
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
-			f->sleep = 1;
+			this->sleep = 1;
 		}
 	}
 
-	f->tiles = 0;
-	f->coordinatesets = 0;
+	this->tiles = 0;
+	this->coordinatesets = 0;
 
 	if (!hasseed) {
 		srand(time(NULL) & 0xFFFFFFFF);
-		f->seed = rand();
+		this->seed = rand();
 	}
-	srand(f->seed);
+	srand(this->seed);
 
 	Screen scr;
-	f->scr = &scr;
+	this->scr = &scr;
 	switch (screentype) {
 		case SCREEN_NCURSES:
-			ncscreen(&scr, f);
+			ncscreen(&scr, this);
 			break;
 		case SCREEN_SILENT:
-			silentscreen(&scr, f);
+			silentscreen(&scr, this);
 			break;
 		default:
-			dumbscreen(&scr, f);
+			dumbscreen(&scr, this);
 			break;
 	}
-	alloctiles(f);
-	resettiles(f);
-	calcmines(f);
-	setmines(f);
-	pressrandom(f, 1);
-	scr.init(f);
-	scr.speak(f, "Seed: %u\n", f->seed);
-	printfield(f);
-	f->state = STATE_PLAY;
+	this->alloctiles();
+	this->resettiles();
+	this->calcmines();
+	this->setmines();
+	this->pressrandom(1);
+	this->scr->init(this);
+	this->scr->speak(this, "Seed: %u\n", this->seed);
+	this->printfield();
+	this->state = STATE_PLAY;
 	Player ply;
 	if (ai) {
-		AI(&ply, f);
+		AI(&ply, this);
 	} else {
-		NCPlayer(&ply, f);
+		NCPlayer(&ply, this);
 	}
-	ply.initfun(&ply, f);
-	while (f->state == STATE_PLAY) {
-		Action **act = (*ply.actfun)(&ply, f);
+	ply.initfun(&ply, this);
+	while (this->state == STATE_PLAY) {
+		Action **act = (*ply.actfun)(&ply, this);
 		bool giveup = 0;
 		int i = 0;
 		while (act[i] != NULL) {
@@ -528,49 +524,49 @@ int main(int argc, char *argv[]) {
 			}
 			int tileidx = a->tileidx;
 			if (a->type == PRESS) {
-				press(f, tileidx);
+				this->press(tileidx);
 			} else if (a->type == FLAG) {
-				flag(f, tileidx);
+				this->flag(tileidx);
 			}
 		}
-		if (giveup || f->state != STATE_PLAY) {
-			printfield(f);
+		if (giveup || this->state != STATE_PLAY) {
+			this->printfield();
 		}
 		(*ply.freefun)(&ply, act);
 		if (giveup) break;
 	}
 	const char *msg = "No message";
 	const char *expect = "huh";
-	if (f->state == STATE_PLAY) {
+	if (this->state == STATE_PLAY) {
 		msg = "You give up? Too bad!\n";
 		expect = "giveup";
-	} else if (f->state == STATE_LOST) {
+	} else if (this->state == STATE_LOST) {
 		msg = "Too bad!\n";
 		expect = "loss";
-	} else if (f->state == STATE_WON) {
+	} else if (this->state == STATE_WON) {
 		msg = "Congratulations!\n";
 		expect = "win";
 	}
-	ply.deinitfun(&ply, f);
-	scr.speak(f, msg);
-	if (f->sleep) usleep(800000);
-	scr.deinit(f);
-	if (f->expect != NULL) {
-		return strcmp(expect, f->expect) ? 1 : 0;
+	ply.deinitfun(&ply, this);
+	scr.speak(this, msg);
+	if (this->sleep) usleep(800000);
+	scr.deinit(this);
+	if (this->expect != NULL) {
+		return strcmp(expect, this->expect) ? 1 : 0;
 	}
 	printf("To reproduce:\n%s", argv[0]);
 	{
 		Dimension d;
-		for (d = f->dimcount; d && d--;) {
-			printf(" %d", f->dimensions[d]);
+		for (d = this->dimcount; d && d--;) {
+			printf(" %d", this->dimensions[d]);
 		}
 	}
-	printf(" --mines %d --seed %d --expect %s\n", f->mines, f->seed, expect);
+	printf(" --mines %d --seed %d --expect %s\n", this->mines, this->seed, expect);
 
-	delete (f->coordinatesets);
-	delete (f->tiles);
-	delete (f->dimensions);
-	delete (f->dimensionproducts);
-	delete (f);
+	delete (this->coordinatesets);
+	delete (this->tiles);
+	delete (this->dimensions);
+	delete (this->dimensionproducts);
+	delete (this);
 	return 0;
 }

@@ -46,7 +46,7 @@ static void screendeinit(Minefield *f) {
 
 	freemarks(nc);
 
-	delete f->scr->data;
+	delete nc;
 	f->scr->data = NULL;
 }
 
@@ -187,8 +187,8 @@ static void updatetile_mark(Minefield *f, int idx, int mark) {
 	if (nc == NULL) {
 		return;
 	}
-	int row = outputrow(f, idxtocoords(f, idx));
-	int column = outputcolumn(f, idxtocoords(f, idx));
+	int row = f->outputrow(f->idxtocoords(idx));
+	int column = f->outputcolumn(f->idxtocoords(idx));
 	char c = tilechar(f->tiles+idx);
 	WINDOW *w = nc->field;
 	wmove(w, row, column);

@@ -19,7 +19,7 @@ static void setcursor(Player *p, Minefield *f, WINDOW *scr) {
 	f->scr->resetmarks(f);
 	f->scr->mark(f, idx, 1);
 	int neighbours[f->maxneighbours];
-	neighbourhood(f, idx, neighbours);
+	f->neighbourhood(idx, neighbours);
 	int i;
 	for (i = 0; i < f->maxneighbours; ++i) {
 		int n = neighbours[i];
@@ -52,8 +52,8 @@ static Action **ncact(Player *p, Minefield *f) {
 			return res;
 		} else if (ch == 'z') {
 			f->tiles[d->cursidx].flags ^= TILE_MINE;
-			recalcneighbours(f);
-			printfield(f);
+			f->recalcneighbours();
+			f->printfield();
 		} else {
 			int i;
 			for (i = 0; inckeys[i] != '\0' && deckeys[i] != '\0' && i < f->dimcount; ++i) {
@@ -87,7 +87,7 @@ static void ncinit(Player *p, Minefield *f) {
 }
 
 static void ncdeinit(Player *p, Minefield *f) {
-	delete p->payload;
+	delete (NCply *) p->payload;
 }
 
 void NCPlayer(Player *p, Minefield *f) {

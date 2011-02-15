@@ -2,7 +2,9 @@
 #define SILENTSCREEN_H
 
 #include <ncurses.h>
+#include "cmines.h"
+#include "Screen.h"
 
-void silentscreen(struct _Screen *, struct _Minefield *);
+void silentscreen(Screen *, Minefield *);
 
 #endif
