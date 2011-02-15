@@ -2,7 +2,7 @@
 AI.o
 cmines
 Minefield.o
-ncscreen.o
+NCScreen.o
 NCPlayer.o
-dumbscreen.o
-silentscreen.o
+DumbScreen.o
+SilentScreen.o

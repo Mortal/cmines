@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include "Minefield.h"
 #include "Screen.h"
-#include "ncscreen.h"
-#include "dumbscreen.h"
-#include "silentscreen.h"
+#include "NCScreen.h"
+#include "DumbScreen.h"
+#include "SilentScreen.h"
 #include "AI.h"
 #include "NCPlayer.h"
 

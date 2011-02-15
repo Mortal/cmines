@@ -16,7 +16,7 @@
 #include "types.h"
 #include "Player.h"
 #include "Screen.h"
-#include "ncscreen.h"
+#include "NCScreen.h"
 
 #include <queue>
 

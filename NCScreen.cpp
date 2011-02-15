@@ -4,8 +4,7 @@
 #include <stdarg.h>
 #include "Minefield.h"
 #include "Screen.h"
-#include "ncscreen.h"
-#include "silentscreen.h"
+#include "NCScreen.h"
 
 /* fields with no neighbours */
 #define PAIR_VOID (1)

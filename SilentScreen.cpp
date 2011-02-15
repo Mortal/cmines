@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include "Minefield.h"
 #include "Screen.h"
-#include "silentscreen.h"
+#include "SilentScreen.h"
 
 void SilentScreen::init(Minefield *f) {
 }
