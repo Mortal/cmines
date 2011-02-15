@@ -6,13 +6,13 @@
 #endif
 #include <time.h>
 #include <unistd.h>
-#include "cmines.h"
+#include "Minefield.h"
 #include "Screen.h"
 #include "ncscreen.h"
 #include "dumbscreen.h"
 #include "silentscreen.h"
-#include "ai.h"
-#include "ncplayer.h"
+#include "AI.h"
+#include "NCPlayer.h"
 
 char tilechar(Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';

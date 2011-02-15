@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <curses.h>
-#include "cmines.h"
+#include "Minefield.h"
 #include "Screen.h"
 #include "dumbscreen.h"
 #include "silentscreen.h"

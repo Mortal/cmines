@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ai.h"
+#include "AI.h"
 #include "Player.h"
 #include "Screen.h"
 

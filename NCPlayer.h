@@ -2,7 +2,7 @@
 #define NCPLAYER_H
 
 #include "Player.h"
-#include "cmines.h"
+#include "Minefield.h"
 #include <ncurses.h>
 
 typedef struct {

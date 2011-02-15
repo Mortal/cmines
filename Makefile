@@ -9,7 +9,7 @@ endif
 .c.o:
 	g++ $(OPTS) -c $<
 
-OBJECTS = ai.o cmines.o ncscreen.o dumbscreen.o silentscreen.o ncplayer.o
+OBJECTS = AI.o Minefield.o ncscreen.o dumbscreen.o silentscreen.o NCPlayer.o
 
 all: $(OBJECTS)
 	g++ $(OPTS) -lncurses $(OBJECTS) -o cmines
@@ -17,11 +17,11 @@ all: $(OBJECTS)
 clean:
 	rm -vf $(OBJECTS) cmines
 
-ai.o: ai.c ai.h cmines.h Player.h
-ncplayer.o: ncplayer.c ncplayer.h cmines.h Player.h
-ncscreen.o: ncscreen.c ncscreen.h cmines.h Screen.h
-dumbscreen.o: dumbscreen.c cmines.h dumbscreen.h Screen.h
-silentscreen.o: silentscreen.c cmines.h silentscreen.h Screen.h
-cmines.o: cmines.c cmines.h types.h ncscreen.h dumbscreen.h silentscreen.h ncplayer.h Player.h Screen.h ai.h
+AI.o: AI.c AI.h Minefield.h Player.h
+NCPlayer.o: NCPlayer.c NCPlayer.h Minefield.h Player.h
+ncscreen.o: ncscreen.c ncscreen.h Minefield.h Screen.h
+dumbscreen.o: dumbscreen.c Minefield.h dumbscreen.h Screen.h
+silentscreen.o: silentscreen.c Minefield.h silentscreen.h Screen.h
+Minefield.o: Minefield.c Minefield.h types.h ncscreen.h dumbscreen.h silentscreen.h NCPlayer.h Player.h Screen.h AI.h
 
 # DO NOT DELETE

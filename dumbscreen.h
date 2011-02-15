@@ -2,7 +2,7 @@
 #define DUMBSCREEN_H
 
 #include <ncurses.h>
-#include "cmines.h"
+#include "Minefield.h"
 #include "Screen.h"
 
 void dumbscreen(Screen *, Minefield *);

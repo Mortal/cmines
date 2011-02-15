@@ -1,7 +1,7 @@
 #ifndef AI_H
 #define AI_H
 #include "Player.h"
-#include "cmines.h"
+#include "Minefield.h"
 
 class AI : public Player<AI> {
 	public:

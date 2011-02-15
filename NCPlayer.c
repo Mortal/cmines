@@ -1,5 +1,5 @@
 #include "types.h"
-#include "ncplayer.h"
+#include "NCPlayer.h"
 #include "ncscreen.h"
 #include <ncurses.h>
 #include <stdlib.h>

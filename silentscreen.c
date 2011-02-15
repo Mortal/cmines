@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <curses.h>
 #include <stdarg.h>
-#include "cmines.h"
+#include "Minefield.h"
 #include "Screen.h"
 #include "silentscreen.h"
 

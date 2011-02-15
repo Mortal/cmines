@@ -2,7 +2,7 @@
 #define NCSCREEN_H
 
 #include <ncurses.h>
-#include "cmines.h"
+#include "Minefield.h"
 #include "Screen.h"
 
 typedef struct _NCmark NCmark;
