@@ -241,6 +241,20 @@ void Minefield::redrawfield() {
 	this->shouldredrawfield = true;
 }
 
+void Minefield::mark(int idx, int mark) {
+	if (this->marks == NULL) {
+		this->marks = new std::queue<Mark*>();
+	}
+	Mark *m = new Mark;
+	m->idx = idx;
+	m->mark = mark;
+	this->marks->push(m);
+}
+
+void Minefield::resetmarks() {
+	this->shouldresetmarks = true;
+}
+
 void ripple_push(PressRipple *r, int idx) {
 	if ((r->last+1) % r->length == r->first) {r->overflow = 1; return;}
 	r->tilestart[r->last] = idx;
@@ -597,6 +611,17 @@ void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *pl
 			this->printfield(output);
 			scr->updatefield(this, output);
 			this->shouldredrawfield = false;
+		}
+		if (this->marks != NULL) {
+			while (!this->marks->empty()) {
+				Mark *m = this->marks->front();
+				scr->mark(this, m->idx, m->mark);
+				this->marks->pop();
+			}
+		}
+		if (this->shouldresetmarks) {
+			scr->resetmarks(this);
+			this->shouldresetmarks = false;
 		}
 		if (giveup || this->state != STATE_PLAY) {
 			char output[(this->outputwidth+1) * this->outputheight];

@@ -241,16 +241,14 @@ Action **AI::act(Minefield *f) {
 #define ACT(method) {\
 	Action **ret = this->method(f, idx);\
 	if (ret != NULL) {\
-		/*\
 		if (f->sleep) {\
-			f->scr->resetmarks(f);\
-			f->scr->mark(f, idx, 1);\
+			f->resetmarks();\
+			f->mark(idx, 1);\
 			int i;\
 			for (i = 0; ret[i] != NULL; ++i) {\
-				f->scr->mark(f, ret[i]->tileidx, 2);\
+				f->mark(ret[i]->tileidx, 2);\
 			}\
 		}\
-		*/\
 		this->allowcoordreset = 1;\
 		/*\
 		char msg[256];\

@@ -97,6 +97,9 @@ public:
 	void redrawtile(int idx);
 	void redrawfield();
 
+	void mark(int idx, int mark);
+	void resetmarks();
+
 	int main(int argc, char *argv[]);
 
 private:
@@ -124,7 +127,9 @@ private:
 	bool ai; /* use AI? */
 
 	std::queue<int> *redrawtiles;
+	std::queue<Mark *> *marks;
 	bool shouldredrawfield;
+	bool shouldresetmarks;
 };
 
 #endif

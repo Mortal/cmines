@@ -12,15 +12,15 @@ const char deckeys[] = "awji";
 void NCPlayer::setcursor(Minefield *f, WINDOW *scr) {
 	NCply *d = this->payload;
 	int idx = d->cursidx;
-	//f->scr->resetmarks(f);
-	//f->scr->mark(f, idx, 1);
+	f->resetmarks();
+	f->mark(idx, 1);
 	int neighbours[f->maxneighbours];
 	f->neighbourhood(idx, neighbours);
 	int i;
 	for (i = 0; i < f->maxneighbours; ++i) {
 		int n = neighbours[i];
 		if (n == -1) continue;
-		//f->scr->mark(f, n, 2);
+		f->mark(n, 2);
 	}
 	wrefresh(scr);
 }

@@ -6,6 +6,11 @@
 #define SCREENMARK_PRIMARY (1)
 #define SCREENMARK_SECONDARY (2)
 
+typedef struct {
+	int idx;
+	int mark;
+} Mark;
+
 #define CALL(fn, ...) static_cast<ConcreteScreen*>(this)->fn(__VA_ARGS__)
 class Minefield;
 template <class ConcreteScreen> class Screen {
