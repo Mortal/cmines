@@ -39,19 +39,19 @@ typedef struct _Minefield {
 	Tile *tiles;
 
 	/* Number of entries in `tiles'. */
-	unsigned int tilecount;
-	unsigned int maxneighbours;
+	int tilecount;
+	int maxneighbours;
 
 	/* Some statistics. */
-	unsigned int mines;
-	unsigned int presseds;
-	unsigned int flaggeds;
+	int mines;
+	int presseds;
+	int flaggeds;
 
 	/* whether mines was set automatically */
 	bool automines;
 
-	unsigned int outputwidth;
-	unsigned int outputheight;
+	int outputwidth;
+	int outputheight;
 
 	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
 	 * Accessed via idxtocoords and coordstoidx. */
@@ -80,12 +80,12 @@ Coordinate *idxtocoords(Minefield *, int idx);
 
 /* Convert coordinates to tile index. When passed a pointer into
  * `coordinatesets', calculates index by pointer arithmetic. */
-unsigned int coordstoidx(Minefield *, Coordinate *c);
+int coordstoidx(Minefield *, Coordinate *c);
 
 /* Get the neighbouring indices of the tile at the given index and store them
  * in `neighbours'. This output array should contain at least `maxneighbours'
  * pointers to Coordinate sets, initially set to zero. */
-void neighbourhood(Minefield *, unsigned int idx, int *neighbours);
+void neighbourhood(Minefield *, int idx, int *neighbours);
 
 /* Various functions to initialise the global variables and create the game
  * field. */

@@ -8,8 +8,8 @@
 	#define FALSE (0)
 #endif
 
-typedef unsigned int Coordinate;
-typedef unsigned int Dimension;
+typedef int Coordinate;
+typedef int Dimension;
 #ifndef bool
 #if !__cplusplus
 	typedef char bool;

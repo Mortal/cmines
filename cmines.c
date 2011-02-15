@@ -101,11 +101,11 @@ Coordinate *idxtocoords(Minefield *f, int idx) {
 	return f->coordinatesets+idx*f->dimcount;
 }
 
-unsigned int coordstoidx(Minefield *f, Coordinate *c) {
+int coordstoidx(Minefield *f, Coordinate *c) {
 	if (c >= f->coordinatesets && c < f->coordinatesets+f->dimcount*f->tilecount) {
 		return (c-f->coordinatesets)/f->dimcount;
 	}
-	unsigned int idx = 0;
+	int idx = 0;
 	int i;
 	for (i = 0; i < f->dimcount; ++i) {
 		idx *= f->dimensions[i];
@@ -114,7 +114,7 @@ unsigned int coordstoidx(Minefield *f, Coordinate *c) {
 	return idx;
 }
 
-void neighbourhood2(Minefield *f, unsigned int root, int *neighbours, Dimension d, int times) {
+void neighbourhood2(Minefield *f, int root, int *neighbours, Dimension d, int times) {
 	if (d >= f->dimcount) return;
 	int i, inc = f->maxneighbours/times;
 	for (i = 0; i < f->maxneighbours; i += 3*inc) {
@@ -139,7 +139,7 @@ void neighbourhood2(Minefield *f, unsigned int root, int *neighbours, Dimension 
 	neighbourhood2(f, root, neighbours, d+1, times*3);
 }
 
-void neighbourhood(Minefield *f, unsigned int root, int *neighbours) {
+void neighbourhood(Minefield *f, int root, int *neighbours) {
 	memset(neighbours, -1, sizeof(int)*(f->maxneighbours));
 	neighbours[0] = root;
 	neighbourhood2(f, root, neighbours, 0, 3);
