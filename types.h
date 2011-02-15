@@ -11,7 +11,9 @@
 typedef unsigned int Coordinate;
 typedef unsigned int Dimension;
 #ifndef bool
+#if !__cplusplus
 	typedef char bool;
+#endif
 #endif
 
 #define TILE_MINE 0x1

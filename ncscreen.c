@@ -53,7 +53,8 @@ static void screendeinit(Minefield *f) {
 static void screeninit(Minefield *f) {
 	screendeinit(f);
 
-	NC *nc = f->scr->data = (NC *) malloc(sizeof(NC));
+	NC *nc;
+	f->scr->data = nc = (NC *) malloc(sizeof(NC));
 
 	initscr();
 	cbreak();

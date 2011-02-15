@@ -1,6 +1,18 @@
 #ifndef CMINES_H
 #define CMINES_H
 
+#define HEXAGONAL
+
+/* Hexagonal tiles have only six neighbours instead of the usual eight.
+ * / \_/ \_
+ * \_/ \_/ \
+ * / \_/ \_/
+ *
+ * In cmines, with hexagonal tiles and a rectangular terminal/array, a tiles'
+ * two-dimensional neighbours are the cardinal neighbours, and NE and NW on
+ * even x, and SE and SW on odd x.
+ */
+
 #include "types.h"
 
 char tilechar(Tile *tile);

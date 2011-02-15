@@ -423,8 +423,8 @@ int main(int argc, char *argv[]) {
 			++i;
 		}
 	}
-	f->dimensions = malloc(sizeof(Coordinate)*f->dimcount);
-	f->dimensionproducts = malloc(sizeof(Coordinate)*f->dimcount);
+	f->dimensions = (Coordinate *) malloc(sizeof(Coordinate)*f->dimcount);
+	f->dimensionproducts = (Coordinate *) malloc(sizeof(Coordinate)*f->dimcount);
 	Dimension d = f->dimcount;
 #define SCREEN_DUMB (0)
 #define SCREEN_NCURSES (1)

@@ -7,12 +7,12 @@ else
 endif
 
 .c.o:
-	gcc $(OPTS) -c $<
+	g++ $(OPTS) -c $<
 
 OBJECTS = ai.o cmines.o ncscreen.o dumbscreen.o silentscreen.o ncplayer.o
 
 all: $(OBJECTS)
-	gcc $(OPTS) -lncurses $(OBJECTS) -o cmines
+	g++ $(OPTS) -lncurses $(OBJECTS) -o cmines
 
 clean:
 	rm -vf $(OBJECTS) cmines

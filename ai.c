@@ -103,7 +103,7 @@ ACT(act_singlecheck) {
 		return NULL;
 	}
 
-	Action **ret = malloc(sizeof(Action *)*(neighbourunknown+1));
+	Action **ret = (Action **) malloc(sizeof(Action *)*(neighbourunknown+1));
 	int retidx = 0;
 	int i = 0;
 	for (i = 0; i < f->maxneighbours; ++i) {
