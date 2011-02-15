@@ -341,7 +341,6 @@ void Minefield::press(int idx) {
 		this->ripplepress(&r);
 	}
 	if (r.overflow) this->handlepressoverflow();
-	if (this->sleep) usleep(100000);
 }
 
 void Minefield::flag(int idx) {
@@ -637,6 +636,9 @@ void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *pl
 		this->flushredraws(scr);
 		ply->free(act);
 		if (giveup) break;
+		if (this->sleep) {
+			usleep(150000);
+		}
 	}
 	ply->deinit(this);
 }
