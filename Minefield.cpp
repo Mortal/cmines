@@ -492,20 +492,20 @@ int Minefield::main(int argc, char *argv[]) {
 	}
 	srand(this->seed);
 
+#define PLAYSCREEN(SCREEN) {SCREEN *scr = new SCREEN(this);\
+	this->playscreen(scr);\
+	delete scr;\
+}
 	switch (screentype) {
-		//case SCREEN_NCURSES:
-		default:
-			NCScreen *scr = new NCScreen(this);
-			this->playscreen(scr);
-			delete scr;
-			/*
+		case SCREEN_NCURSES:
+			PLAYSCREEN(NCScreen);
+			break;
 		case SCREEN_SILENT:
-			silentscreen(&scr, this);
+			PLAYSCREEN(SilentScreen);
 			break;
 		default:
-			dumbscreen(&scr, this);
+			PLAYSCREEN(DumbScreen);
 			break;
-			*/
 	}
 	return 0;
 }

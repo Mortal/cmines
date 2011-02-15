@@ -13,7 +13,7 @@ endif
 .cpp.o:
 	g++ $(OPTS) -c $<
 
-OBJECTS = AI.o Minefield.o ncscreen.o NCPlayer.o
+OBJECTS = AI.o Minefield.o ncscreen.o NCPlayer.o dumbscreen.o silentscreen.o
 
 all: $(OBJECTS)
 	g++ $(OPTS) -lncurses $(OBJECTS) -o cmines
