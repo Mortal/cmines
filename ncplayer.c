@@ -32,8 +32,8 @@ static void setcursor(Player *p, Minefield *f, WINDOW *scr) {
 static Action **ncact(Player *p, Minefield *f) {
 	GETSCR(f, scr);
 	NCply *d = (NCply *) p->payload;
-	Action *act = (Action *) malloc(sizeof(Action));
-	Action **res = (Action **) malloc(sizeof(Action *)*2);
+	Action *act = new Action;
+	Action **res = new Action*[2];
 	res[0] = act;
 	res[1] = NULL;
 	while (1) {
@@ -73,21 +73,21 @@ static Action **ncact(Player *p, Minefield *f) {
 static void ncfree(Player *p, Action **a) {
 	int i = 0;
 	while (a[i] != NULL) {
-		free(a[i++]);
+		delete a[i++];
 	}
-	free(a);
+	delete a;
 }
 
 static void ncinit(Player *p, Minefield *f) {
 	cbreak(); // TODO: use raw() instead
 	noecho();
 	NCply *n;
-	p->payload = n = (NCply *) malloc(sizeof(NCply));
+	p->payload = n = new NCply;
 	n->cursidx = 0;
 }
 
 static void ncdeinit(Player *p, Minefield *f) {
-	free(p->payload);
+	delete p->payload;
 }
 
 void NCPlayer(Player *p, Minefield *f) {

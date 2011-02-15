@@ -53,11 +53,13 @@ int outputrow(Minefield *f, Coordinate *tile) {
 }
 
 void alloctiles(Minefield *f) {
-	if (f->tiles != 0) {
-		free(f->tiles); f->tiles = 0;
+	if (f->tiles != NULL) {
+		delete f->tiles;
+		f->tiles = NULL;
 	}
-	if (f->coordinatesets != 0) {
-		free(f->coordinatesets); f->coordinatesets = 0;
+	if (f->coordinatesets != NULL) {
+		delete f->coordinatesets;
+		f->coordinatesets = NULL;
 	}
 	int i;
 	f->tilecount = 1;
@@ -66,7 +68,7 @@ void alloctiles(Minefield *f) {
 		f->tilecount *= f->dimensions[i];
 		f->maxneighbours *= 3;
 	}
-	f->tiles = (Tile *) malloc(f->tilecount*sizeof(Tile));
+	f->tiles = new Tile[f->tilecount];
 	if (f->tiles == NULL) {
 		printf("Not enough memory to allocate %d tiles!\n", f->tilecount);
 		exit(2);
@@ -75,7 +77,7 @@ void alloctiles(Minefield *f) {
 	for (i = 0; i < f->tilecount; ++i) {
 		f->tiles[i] = tile;
 	}
-	f->coordinatesets = (Coordinate *) malloc(f->tilecount*f->dimcount*sizeof(Coordinate));
+	f->coordinatesets = new Coordinate[f->tilecount*f->dimcount];
 	for (i = 0; i < f->dimcount; ++i) {
 		f->coordinatesets[i] = 0;
 	}
@@ -395,7 +397,7 @@ bool isnumber(const char *c) {
 }
 
 int main(int argc, char *argv[]) {
-	Minefield *f = (Minefield *) malloc(sizeof(Minefield));
+	Minefield *f = new Minefield;
 	f->dimcount = 0;
 	f->automines = 1;
 	f->sleep = 0;
@@ -423,8 +425,8 @@ int main(int argc, char *argv[]) {
 			++i;
 		}
 	}
-	f->dimensions = (Coordinate *) malloc(sizeof(Coordinate)*f->dimcount);
-	f->dimensionproducts = (Coordinate *) malloc(sizeof(Coordinate)*f->dimcount);
+	f->dimensions = new Coordinate[f->dimcount];
+	f->dimensionproducts = new Coordinate[f->dimcount];
 	Dimension d = f->dimcount;
 #define SCREEN_DUMB (0)
 #define SCREEN_NCURSES (1)
@@ -565,10 +567,10 @@ int main(int argc, char *argv[]) {
 	}
 	printf(" --mines %d --seed %d --expect %s\n", f->mines, f->seed, expect);
 
-	free(f->coordinatesets);
-	free(f->tiles);
-	free(f->dimensions);
-	free(f->dimensionproducts);
-	free(f);
+	delete (f->coordinatesets);
+	delete (f->tiles);
+	delete (f->dimensions);
+	delete (f->dimensionproducts);
+	delete (f);
 	return 0;
 }

@@ -103,7 +103,7 @@ ACT(act_singlecheck) {
 		return NULL;
 	}
 
-	Action **ret = (Action **) malloc(sizeof(Action *)*(neighbourunknown+1));
+	Action **ret = new Action*[neighbourunknown+1];
 	int retidx = 0;
 	int i = 0;
 	for (i = 0; i < f->maxneighbours; ++i) {
@@ -112,7 +112,7 @@ ACT(act_singlecheck) {
 		Tile *t = &f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			act.tileidx = idx;
-			Action *pact = ret[retidx++] = (Action *) malloc(sizeof(Action));
+			Action *pact = ret[retidx++] = new Action;
 			*pact = act;
 		}
 	}
@@ -256,12 +256,12 @@ ACT(act_dualcheck) {
 			} else {
 				continue;
 			}
-			Action **res = (Action **) malloc(sizeof(Action *)*(count+1));
+			Action **res = new Action*[count+1];
 			int i, j = 0;
 			for (i = 0; i < f->maxneighbours; ++i) {
 				act.tileidx = bnu[i];
 				if (act.tileidx == -1) continue;
-				res[j] = (Action *) malloc(sizeof(Action));
+				res[j] = new Action;
 				*res[j] = act;
 				j++;
 			}
@@ -316,8 +316,8 @@ static Action **act(Player *p, Minefield *f) {
 	}
 	// we've exhausted the playing field twice now. we give up since the board is
 	// ambiguous.
-	Action **res = (Action **) malloc(sizeof(Action *)*2);
-	res[0] = (Action *) malloc(sizeof(Action));
+	Action **res = new Action*[2];
+	res[0] = new Action;
 	giveup(res[0]);
 	res[1] = NULL;
 	return res;
@@ -327,9 +327,9 @@ static Action **act(Player *p, Minefield *f) {
 static void actfree(Player *p, Action **act) {
 	int i = 0;
 	while (act[i] != NULL) {
-		free(act[i++]);
+		delete act[i++];
 	}
-	free(act);
+	delete act;
 }
 
 static void aiinit(Player *p, Minefield *f) {

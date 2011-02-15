@@ -31,7 +31,7 @@ static void freemarks(NC *nc) {
 	while (mark != NULL) {
 		NCmark *m = mark;
 		mark = m->next;
-		free(m);
+		delete m;
 	}
 	nc->mark = NULL;
 }
@@ -46,7 +46,7 @@ static void screendeinit(Minefield *f) {
 
 	freemarks(nc);
 
-	free(f->scr->data);
+	delete f->scr->data;
 	f->scr->data = NULL;
 }
 
@@ -54,7 +54,7 @@ static void screeninit(Minefield *f) {
 	screendeinit(f);
 
 	NC *nc;
-	f->scr->data = nc = (NC *) malloc(sizeof(NC));
+	f->scr->data = nc = new NC;
 
 	initscr();
 	cbreak();
@@ -217,7 +217,7 @@ static void speak(Minefield *f, const char *fmt, ...) {
 
 static void ncmark(Minefield *f, int idx, int mark) {
 	NC *nc = (NC *) f->scr->data;
-	NCmark *add = (NCmark *) malloc(sizeof(NCmark));
+	NCmark *add = new NCmark;
 	add->idx = idx;
 	add->mark = mark;
 	add->next = nc->mark;
