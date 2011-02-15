@@ -12,7 +12,7 @@
 #include "dumbscreen.h"
 #include "silentscreen.h"
 #include "ai.h"
-//#include "ncplayer.h"
+#include "ncplayer.h"
 
 char tilechar(Tile *tile) {
 	if (tile->flags & TILE_FLAGGED) return '/';
@@ -506,9 +506,15 @@ int Minefield::main(int argc, char *argv[]) {
 	this->printfield();
 	this->state = STATE_PLAY;
 
-	Player<AI> *ply = new AI(this);
-	this->playgame(ply);
-	delete ply;
+	if (ai) {
+		Player<AI> *ply = new AI(this);
+		this->playgame(ply);
+		delete ply;
+	} else {
+		Player<NCPlayer> *ply = new NCPlayer(this);
+		this->playgame(ply);
+		delete ply;
+	}
 
 	const char *msg = "No message";
 	const char *expect = "huh";

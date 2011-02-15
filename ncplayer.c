@@ -6,15 +6,11 @@
 
 #define GETSCR(f, scr) WINDOW *scr = ((struct NCscreen *) f->scr->data)->field
 
-typedef struct {
-	int cursidx;
-} NCply;
-
 const char inckeys[] = "dslk";
 const char deckeys[] = "awji";
 
-static void setcursor(Player *p, Minefield *f, WINDOW *scr) {
-	NCply *d = (NCply *) p->payload;
+void NCPlayer::setcursor(Minefield *f, WINDOW *scr) {
+	NCply *d = this->payload;
 	int idx = d->cursidx;
 	f->scr->resetmarks(f);
 	f->scr->mark(f, idx, 1);
@@ -29,15 +25,15 @@ static void setcursor(Player *p, Minefield *f, WINDOW *scr) {
 	wrefresh(scr);
 }
 
-static Action **ncact(Player *p, Minefield *f) {
+Action **NCPlayer::act(Minefield *f) {
 	GETSCR(f, scr);
-	NCply *d = (NCply *) p->payload;
+	NCply *d = (NCply *) this->payload;
 	Action *act = new Action;
 	Action **res = new Action*[2];
 	res[0] = act;
 	res[1] = NULL;
 	while (1) {
-		setcursor(p, f, scr);
+		this->setcursor(f, scr);
 		int ch = getch();
 		if (ch == 'q') {
 			act->type = GIVEUP;
@@ -70,7 +66,7 @@ static Action **ncact(Player *p, Minefield *f) {
 	}
 }
 
-static void ncfree(Player *p, Action **a) {
+void NCPlayer::free(Action **a) {
 	int i = 0;
 	while (a[i] != NULL) {
 		delete a[i++];
@@ -78,22 +74,18 @@ static void ncfree(Player *p, Action **a) {
 	delete a;
 }
 
-static void ncinit(Player *p, Minefield *f) {
+void NCPlayer::init(Minefield *f) {
 	cbreak(); // TODO: use raw() instead
 	noecho();
 	NCply *n;
-	p->payload = n = new NCply;
+	this->payload = n = new NCply;
 	n->cursidx = 0;
 }
 
-static void ncdeinit(Player *p, Minefield *f) {
-	delete (NCply *) p->payload;
+void NCPlayer::deinit(Minefield *f) {
+	delete this->payload;
 }
 
-void NCPlayer(Player *p, Minefield *f) {
-	p->initfun = &ncinit;
-	p->deinitfun = &ncdeinit;
-	p->actfun = &ncact;
-	p->freefun = &ncfree;
-	p->payload = NULL;
+NCPlayer::NCPlayer(Minefield *f) {
+	this->payload = NULL;
 }

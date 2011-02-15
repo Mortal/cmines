@@ -2,7 +2,24 @@
 #define NCPLAYER_H
 
 #include "Player.h"
+#include "cmines.h"
+#include <ncurses.h>
 
-void NCPlayer(Player *, Minefield *);
+typedef struct {
+	int cursidx;
+} NCply;
+
+class NCPlayer : public Player<NCPlayer> {
+	public:
+		NCPlayer(Minefield *);
+		void init(Minefield *);
+		void deinit(Minefield *);
+		Action ** act(Minefield *);
+		void free(Action **);
+
+	private:
+		void setcursor(Minefield *f, WINDOW *scr);
+		NCply *payload;
+};
 
 #endif
