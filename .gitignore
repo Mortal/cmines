@@ -1,8 +1,8 @@
 *.gch
-ai.o
+AI.o
 cmines
-cmines.o
+Minefield.o
 ncscreen.o
-ncplayer.o
+NCPlayer.o
 dumbscreen.o
 silentscreen.o
