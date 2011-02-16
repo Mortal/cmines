@@ -6,26 +6,26 @@
 #include "Screen.h"
 #include "SilentScreen.h"
 
-void SilentScreen::init(Minefield *f) {
+void SilentScreen::init() {
 }
 
-void SilentScreen::deinit(Minefield *f) {
+void SilentScreen::deinit() {
 }
 
-void SilentScreen::updatefield(Minefield *f, const char *field) {
+void SilentScreen::updatefield(const char *field) {
 }
 
-void SilentScreen::updatetile(Minefield *f, int idx) {
+void SilentScreen::updatetile(int idx) {
 }
 
-void SilentScreen::vspeak(Minefield *f, const char *fmt, va_list argp) {
+void SilentScreen::vspeak(const char *fmt, va_list argp) {
 	vprintf(fmt, argp);
 }
 
-void SilentScreen::mark(Minefield *f, int idx, int mark) {
+void SilentScreen::mark(int idx, int mark) {
 }
 
-void SilentScreen::resetmarks(Minefield *f) {
+void SilentScreen::resetmarks() {
 }
 
 SilentScreen::SilentScreen(Minefield *f) {

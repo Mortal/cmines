@@ -23,18 +23,19 @@ struct NCscreen {
 class NCScreen : public Screen<NCScreen> {
 	public:
 		NCScreen(Minefield *);
-		void init(Minefield *f);
-		void deinit(Minefield *f);
-		void updatefield(Minefield *f, const char *field);
-		void updatetile(Minefield *f, int idx);
-		void vspeak(Minefield *f, const char *fmt, va_list args);
-		void mark(Minefield *f, int idx, int mark);
-		void resetmarks(Minefield *f);
+		void init();
+		void deinit();
+		void updatefield(const char *field);
+		void updatetile(int idx);
+		void vspeak(const char *fmt, va_list args);
+		void mark(int idx, int mark);
+		void resetmarks();
 		WINDOW *getField();
 	private:
 		NCscreen *nc;
-		void puttile(Minefield *f, chtype ch, int mark);
-		void updatetile_mark(Minefield *f, int idx, int mark);
+		Minefield *f;
+		void puttile(chtype ch, int mark);
+		void updatetile_mark(int idx, int mark);
 		void freemarks();
 };
 

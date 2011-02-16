@@ -8,13 +8,13 @@
 class DumbScreen : public Screen<DumbScreen> {
 	public:
 		DumbScreen(Minefield *);
-		void init(Minefield *f);
-		void deinit(Minefield *f);
-		void updatefield(Minefield *f, const char *field);
-		void updatetile(Minefield *f, int idx);
-		void vspeak(Minefield *f, const char *fmt, va_list args);
-		void mark(Minefield *f, int idx, int mark);
-		void resetmarks(Minefield *f);
+		void init();
+		void deinit();
+		void updatefield(const char *field);
+		void updatetile(int idx);
+		void vspeak(const char *fmt, va_list args);
+		void mark(int idx, int mark);
+		void resetmarks();
 };
 
 #endif

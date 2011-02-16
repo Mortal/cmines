@@ -5,27 +5,27 @@
 #include "Screen.h"
 #include "DumbScreen.h"
 
-void DumbScreen::updatefield(Minefield *f, const char *field) {
+void DumbScreen::init() {
+}
+
+void DumbScreen::deinit() {
+}
+
+void DumbScreen::updatefield(const char *field) {
 	printf("%s", field);
 }
 
-void DumbScreen::init(Minefield *f) {
+void DumbScreen::updatetile(int idx) {
 }
 
-void DumbScreen::deinit(Minefield *f) {
-}
-
-void DumbScreen::updatetile(Minefield *f, int idx) {
-}
-
-void DumbScreen::vspeak(Minefield *f, const char *fmt, va_list argp) {
+void DumbScreen::vspeak(const char *fmt, va_list argp) {
 	vprintf(fmt, argp);
 }
 
-void DumbScreen::mark(Minefield *f, int idx, int mark) {
+void DumbScreen::mark(int idx, int mark) {
 }
 
-void DumbScreen::resetmarks(Minefield *f) {
+void DumbScreen::resetmarks() {
 }
 
 DumbScreen::DumbScreen(Minefield *f) {

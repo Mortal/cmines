@@ -35,8 +35,7 @@ void NCScreen::freemarks() {
 	this->nc->mark = NULL;
 }
 
-void NCScreen::deinit(Minefield *f) {
-	if (this->nc == NULL) return;
+void NCScreen::deinit() {
 	curs_set(1);
 	endwin();
 	delwin(this->nc->field);
@@ -48,8 +47,11 @@ void NCScreen::deinit(Minefield *f) {
 	this->nc = NULL;
 }
 
-void NCScreen::init(Minefield *f) {
-	this->deinit(f);
+NCScreen::NCScreen(Minefield *f) {
+	this->f = f;
+}
+
+void NCScreen::init() {
 
 	this->nc = new NC;
 
@@ -72,8 +74,8 @@ void NCScreen::init(Minefield *f) {
 		init_pair(PAIR_SECONDARY_MARK, COLOR_BLACK, COLOR_BLUE);
 	}
 
-	int width = f->outputwidth+1;
-	int height = f->outputheight+1;
+	int width = this->f->outputwidth+1;
+	int height = this->f->outputheight+1;
 
 	/* get screen size */
 	int ww, wh;
@@ -99,7 +101,7 @@ void NCScreen::init(Minefield *f) {
 	this->nc->mark = NULL;
 }
 
-void NCScreen::puttile(Minefield *f, chtype ch, int mark) {
+void NCScreen::puttile(chtype ch, int mark) {
 	char tile = ch & A_CHARTEXT;
 	if (this->nc == NULL) {
 		putchar(tile);
@@ -129,13 +131,13 @@ void NCScreen::puttile(Minefield *f, chtype ch, int mark) {
 	waddch(w, ch);
 }
 
-void NCScreen::updatefield(Minefield *f, const char *field) {
+void NCScreen::updatefield(const char *field) {
 	if (this->nc == NULL) {
 		printf("%s", field);
 		return;
 	}
 	WINDOW *w = this->nc->field;
-	const int lineoffset = f->outputwidth+1;
+	const int lineoffset = this->f->outputwidth+1;
 	const chtype lines[] = {
 		/* 0bABCD: A : above, B : right, C: below, D: left */
 		/* 00          01         10          11 */
@@ -155,7 +157,7 @@ void NCScreen::updatefield(Minefield *f, const char *field) {
 			right = *++field;
 			if (ch == '+') {
 				char above = y ? *(field-lineoffset-1) : '+';
-				char below = (y+1 < f->outputheight) ? *(field+lineoffset-1) : '+';
+				char below = (y+1 < this->f->outputheight) ? *(field+lineoffset-1) : '+';
 				waddch(w, lines[(left == '+' || !x)
 				                + ((below == '+') << 1)
 				                + ((right == '+' || right == '\n' || right == '\0') << 2)
@@ -166,7 +168,7 @@ void NCScreen::updatefield(Minefield *f, const char *field) {
 				waddch(w, '\n');
 				ch = '\0';
 			} else {
-				puttile(f, ch, 0);
+				puttile(ch, 0);
 			}
 			left = ch;
 			++x;
@@ -177,24 +179,24 @@ void NCScreen::updatefield(Minefield *f, const char *field) {
 	wrefresh(w);
 }
 
-void NCScreen::updatetile_mark(Minefield *f, int idx, int mark) {
+void NCScreen::updatetile_mark(int idx, int mark) {
 	if (this->nc == NULL) {
 		return;
 	}
-	int row = f->outputrow(f->idxtocoords(idx));
-	int column = f->outputcolumn(f->idxtocoords(idx));
+	int row = this->f->outputrow(f->idxtocoords(idx));
+	int column = this->f->outputcolumn(f->idxtocoords(idx));
 	char c = tilechar(f->tiles+idx);
 	WINDOW *w = this->nc->field;
 	wmove(w, row, column);
-	puttile(f, c, mark);
+	puttile(c, mark);
 	wrefresh(w);
 }
 
-void NCScreen::updatetile(Minefield *f, int idx) {
-	updatetile_mark(f, idx, 0);
+void NCScreen::updatetile(int idx) {
+	updatetile_mark(idx, 0);
 }
 
-void NCScreen::vspeak(Minefield *f, const char *fmt, va_list argp) {
+void NCScreen::vspeak(const char *fmt, va_list argp) {
 	if (this->nc == NULL) {
 		vprintf(fmt, argp);
 		return;
@@ -204,26 +206,22 @@ void NCScreen::vspeak(Minefield *f, const char *fmt, va_list argp) {
 	wrefresh(s);
 }
 
-void NCScreen::mark(Minefield *f, int idx, int mark) {
+void NCScreen::mark(int idx, int mark) {
 	NCmark *add = new NCmark;
 	add->idx = idx;
 	add->mark = mark;
 	add->next = this->nc->mark;
 	this->nc->mark = add;
-	this->updatetile_mark(f, idx, mark);
+	this->updatetile_mark(idx, mark);
 }
 
-void NCScreen::resetmarks(Minefield *f) {
+void NCScreen::resetmarks() {
 	NCmark *m = this->nc->mark;
 	while (m != NULL) {
-		updatetile_mark(f, m->idx, 0);
+		updatetile_mark(m->idx, 0);
 		m = m->next;
 	}
 	freemarks();
-}
-
-NCScreen::NCScreen(Minefield *f) {
-	this->nc = NULL;
 }
 
 WINDOW *NCScreen::getField() {

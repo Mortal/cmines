@@ -530,8 +530,8 @@ void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
 	this->calcmines();
 	this->setmines();
 	this->pressrandom(1);
-	scr->init(this);
-	scr->speak(this, "Seed: %u\n", this->seed);
+	scr->init();
+	scr->speak("Seed: %u\n", this->seed);
 	this->redrawfield();
 	this->state = STATE_PLAY;
 
@@ -557,9 +557,9 @@ void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
 		msg = "Congratulations!\n";
 		expect = "win";
 	}
-	scr->speak(this, msg);
+	scr->speak(msg);
 	if (this->sleep) usleep(800000);
-	scr->deinit(this);
+	scr->deinit();
 	if (this->expect != NULL) {
 		exit(strcmp(expect, this->expect) ? 1 : 0);
 	}
@@ -584,23 +584,23 @@ void Minefield::flushredraws(Screen<ConcreteScreen> *scr) {
 	if (this->shouldredrawfield) {
 		char output[(this->outputwidth+1) * this->outputheight];
 		this->printfield(output);
-		scr->updatefield(this, output);
+		scr->updatefield(output);
 		this->shouldredrawfield = false;
 	}
 	if (this->redrawtiles != NULL) {
 		while (!this->redrawtiles->empty()) {
-			scr->updatetile(this, this->redrawtiles->front());
+			scr->updatetile(this->redrawtiles->front());
 			this->redrawtiles->pop();
 		}
 	}
 	if (this->shouldresetmarks) {
-		scr->resetmarks(this);
+		scr->resetmarks();
 		this->shouldresetmarks = false;
 	}
 	if (this->marks != NULL) {
 		while (!this->marks->empty()) {
 			Mark *m = this->marks->front();
-			scr->mark(this, m->idx, m->mark);
+			scr->mark(m->idx, m->mark);
 			this->marks->pop();
 		}
 	}
