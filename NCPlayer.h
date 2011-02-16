@@ -12,13 +12,14 @@ typedef struct {
 class NCPlayer : public Player<NCPlayer> {
 	public:
 		NCPlayer(Minefield *);
-		void init(Minefield *);
-		void deinit(Minefield *);
-		Action ** act(Minefield *);
+		~NCPlayer();
+		Action ** act();
 		void free(Action **);
 
 	private:
-		void setcursor(Minefield *f);
+		Minefield *f;
+
+		void setcursor();
 		NCply *payload;
 };
 

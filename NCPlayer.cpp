@@ -4,28 +4,28 @@
 #include <ncurses.h>
 #include <stdlib.h>
 
-#define GETSCR(f, scr) WINDOW *scr = ((class NCScreen *) f->scr)->getField()
+#define GETSCR(scr) WINDOW *scr = ((class NCScreen *) this->f->scr)->getField()
 
 const char inckeys[] = "dslk";
 const char deckeys[] = "awji";
 
-void NCPlayer::setcursor(Minefield *f) {
+void NCPlayer::setcursor() {
 	NCply *d = this->payload;
 	int idx = d->cursidx;
-	f->resetmarks();
-	f->mark(idx, 1);
-	int neighbours[f->maxneighbours];
-	f->neighbourhood(idx, neighbours);
+	this->f->resetmarks();
+	this->f->mark(idx, 1);
+	int neighbours[this->f->maxneighbours];
+	this->f->neighbourhood(idx, neighbours);
 	int i;
-	for (i = 0; i < f->maxneighbours; ++i) {
+	for (i = 0; i < this->f->maxneighbours; ++i) {
 		int n = neighbours[i];
 		if (n == -1) continue;
-		f->mark(n, 2);
+		this->f->mark(n, 2);
 	}
 }
 
-Action **NCPlayer::act(Minefield *f) {
-	//GETSCR(f, scr);
+Action **NCPlayer::act() {
+	//GETSCR(scr);
 	NCply *d = (NCply *) this->payload;
 	Action *act = new Action;
 	act->type = NOOP;
@@ -42,23 +42,23 @@ Action **NCPlayer::act(Minefield *f) {
 		act->type = PRESS;
 		act->tileidx = d->cursidx;
 	} else if (ch == 'z') {
-		f->tiles[d->cursidx].flags ^= TILE_MINE;
-		f->recalcneighbours();
-		f->redrawfield();
+		this->f->tiles[d->cursidx].flags ^= TILE_MINE;
+		this->f->recalcneighbours();
+		this->f->redrawfield();
 	} else {
 		int i;
-		for (i = 0; inckeys[i] != '\0' && deckeys[i] != '\0' && i < f->dimcount; ++i) {
+		for (i = 0; inckeys[i] != '\0' && deckeys[i] != '\0' && i < this->f->dimcount; ++i) {
 			if (ch != inckeys[i] && ch != deckeys[i]) {
 				continue;
 			}
-			int delta = f->dimensionproducts[f->dimcount-i-1];
+			int delta = this->f->dimensionproducts[this->f->dimcount-i-1];
 			if (ch == deckeys[i]) delta = -delta;
-			if (-delta > d->cursidx) d->cursidx += f->tilecount;
+			if (-delta > d->cursidx) d->cursidx += this->f->tilecount;
 			d->cursidx += delta;
-			d->cursidx %= f->tilecount;
+			d->cursidx %= this->f->tilecount;
 		}
 	}
-	this->setcursor(f);
+	this->setcursor();
 	return res;
 }
 
@@ -70,7 +70,8 @@ void NCPlayer::free(Action **a) {
 	delete a;
 }
 
-void NCPlayer::init(Minefield *f) {
+NCPlayer::NCPlayer(Minefield *f) {
+	this->f = f;
 	cbreak(); // TODO: use raw() instead
 	noecho();
 	NCply *n;
@@ -78,10 +79,6 @@ void NCPlayer::init(Minefield *f) {
 	n->cursidx = 0;
 }
 
-void NCPlayer::deinit(Minefield *f) {
+NCPlayer::~NCPlayer() {
 	delete this->payload;
-}
-
-NCPlayer::NCPlayer(Minefield *f) {
-	this->payload = NULL;
 }

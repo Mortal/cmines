@@ -608,10 +608,9 @@ void Minefield::flushredraws(Screen<ConcreteScreen> *scr) {
 
 template <class ConcreteScreen, class ConcretePlayer>
 void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *ply) {
-	ply->init(this);
 	while (this->state == STATE_PLAY) {
 		this->flushredraws(scr);
-		Action **act = ply->act(this);
+		Action **act = ply->act();
 		bool giveup = 0;
 		int i = 0;
 		while (act[i] != NULL) {
@@ -640,5 +639,4 @@ void Minefield::playgame(Screen<ConcreteScreen> *scr, Player<ConcretePlayer> *pl
 			usleep(150000);
 		}
 	}
-	ply->deinit(this);
 }

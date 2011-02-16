@@ -6,27 +6,27 @@
 class AI : public Player<AI> {
 	public:
 		AI(Minefield *);
-		void init(Minefield *);
-		void deinit(Minefield *);
-		Action ** act(Minefield *);
+		Action ** act();
 		void free(Action **);
 
 	private:
+		Minefield *f;
+
 		bool allowcoordreset;
 		int nexttileidx_;
 
 		void giveup(Action *);
-		bool hasnexttile(Minefield *);
-		int nexttileidx(Minefield *);
+		bool hasnexttile();
+		int nexttileidx();
 
-		void filterunknown(Minefield *, int *);
-		int countunknown(Minefield *, int *);
-		int countflags(Minefield *, int *);
-		void neighbourdifference(Minefield *, int *, int *);
+		void filterunknown(int *);
+		int countunknown(int *);
+		int countflags(int *);
+		void neighbourdifference(int *, int *);
 
 		bool issubset(int *superset, int *subset, int length);
-		Action **act_singlecheck(Minefield *, int idx);
-		Action **act_dualcheck(Minefield *, int idx);
+		Action **act_singlecheck(int idx);
+		Action **act_dualcheck(int idx);
 };
 
 #endif

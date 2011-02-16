@@ -8,12 +8,12 @@ void AI::giveup(Action *act) {
 	act->type = GIVEUP;
 }
 
-bool AI::hasnexttile(Minefield *f) {
-	return (this->allowcoordreset || this->nexttileidx_ < f->tilecount);
+bool AI::hasnexttile() {
+	return (this->allowcoordreset || this->nexttileidx_ < this->f->tilecount);
 }
 
-int AI::nexttileidx(Minefield *f) {
-	if (this->nexttileidx_ < f->tilecount) {
+int AI::nexttileidx() {
+	if (this->nexttileidx_ < this->f->tilecount) {
 		return this->nexttileidx_++;
 	}
 	this->allowcoordreset = 0;
@@ -21,13 +21,13 @@ int AI::nexttileidx(Minefield *f) {
 }
 
 #define COUNTER(fun, cb) \
-int AI::fun(Minefield *f, int *neighbours) {\
+int AI::fun(int *neighbours) {\
 	int i;\
 	int matches = 0;\
-	for (i = 0; i < f->maxneighbours; ++i) {\
+	for (i = 0; i < this->f->maxneighbours; ++i) {\
 		int idx = neighbours[i];\
 		if (idx == -1) continue;\
-		Tile *tile = &f->tiles[idx];\
+		Tile *tile = &this->f->tiles[idx];\
 		if (cb) {\
 			++matches;\
 		}\
@@ -36,13 +36,13 @@ int AI::fun(Minefield *f, int *neighbours) {\
 }
 
 #define FILTER(fun, cb) \
-void AI::fun(Minefield *f, int *c) {\
+void AI::fun(int *c) {\
 	int dest = 0;\
 	int i;\
-	for (i = 0; i < f->maxneighbours; ++i) {\
+	for (i = 0; i < this->f->maxneighbours; ++i) {\
 		int idx = c[i];\
 		if (idx == -1) continue;\
-		Tile *tile = &f->tiles[idx];\
+		Tile *tile = &this->f->tiles[idx];\
 		if (cb) {\
 			if (i != dest) {\
 				c[dest] = c[i];\
@@ -50,7 +50,7 @@ void AI::fun(Minefield *f, int *c) {\
 			++dest;\
 		}\
 	}\
-	while (dest < f->maxneighbours) {\
+	while (dest < this->f->maxneighbours) {\
 		c[dest++] = -1;\
 	}\
 }
@@ -60,9 +60,9 @@ COUNTER(countunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
 COUNTER(countflags, !!(tile->flags & TILE_FLAGGED))
 #undef CB
 
-void AI::neighbourdifference(Minefield *f, int *c, int *set) {
+void AI::neighbourdifference(int *c, int *set) {
 	int i, j, k; /* i is read-index in c, j is write-index is c, k is read-index in set */
-	int length = f->maxneighbours;
+	int length = this->f->maxneighbours;
 	for (i = 0, j = 0, k = 0; i < length; ++i) {
 		int tofind = c[i];
 		if (tofind == -1) continue;
@@ -79,18 +79,18 @@ void AI::neighbourdifference(Minefield *f, int *c, int *set) {
 	}
 }
 
-#define ACT(method) Action **AI::method(Minefield *f, int idx)
-#define GETTILE(tile) Tile *tile = &f->tiles[idx]
+#define ACT(method) Action **AI::method(int idx)
+#define GETTILE(tile) Tile *tile = &this->f->tiles[idx]
 
 ACT(act_singlecheck) {
 	GETTILE(tile);
 	if (!(tile->flags & TILE_PRESSED)) return NULL;
 	if (!tile->neighbours) return NULL;
-	int neighbours[f->maxneighbours];
-	f->neighbourhood(idx, (int *) neighbours);
-	int neighbourunknown = countunknown(f, (int *) neighbours);
+	int neighbours[this->f->maxneighbours];
+	this->f->neighbourhood(idx, (int *) neighbours);
+	int neighbourunknown = countunknown((int *) neighbours);
 	if (!neighbourunknown) return NULL;
-	int neighbourflags = countflags(f, (int *) neighbours);
+	int neighbourflags = countflags((int *) neighbours);
 	Action act;
 	if (tile->neighbours == neighbourflags) {
 		act.type = PRESS;
@@ -103,10 +103,10 @@ ACT(act_singlecheck) {
 	Action **ret = new Action*[neighbourunknown+1];
 	int retidx = 0;
 	int i = 0;
-	for (i = 0; i < f->maxneighbours; ++i) {
+	for (i = 0; i < this->f->maxneighbours; ++i) {
 		int idx = neighbours[i];
 		if (idx == -1) continue;
-		Tile *t = &f->tiles[idx];
+		Tile *t = &this->f->tiles[idx];
 		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			act.tileidx = idx;
 			Action *pact = ret[retidx++] = new Action;
@@ -140,72 +140,72 @@ ACT(act_dualcheck) {
 	 */
 
 	// get a's neighbourhood
-	int an[f->maxneighbours];
-	f->neighbourhood(idx, (int *) an);
+	int an[this->f->maxneighbours];
+	this->f->neighbourhood(idx, (int *) an);
 
 	// get a's bomb neighbour count minus already flagged bombs
 	int anb = a->neighbours;
 	{
 		int i;
-		for (i = 0; i < f->maxneighbours; ++i) {
+		for (i = 0; i < this->f->maxneighbours; ++i) {
 			if (an[i] == -1) continue;
-			if (f->tiles[an[i]].flags & TILE_FLAGGED) {
+			if (this->f->tiles[an[i]].flags & TILE_FLAGGED) {
 				--anb;
 			}
 		}
 	}
 
 	// get a's unknown neighbourhood (unflagged, unpressed)
-	int anu[f->maxneighbours];
+	int anu[this->f->maxneighbours];
 	{
 		int i;
-		for (i = 0; i < f->maxneighbours; ++i) {
+		for (i = 0; i < this->f->maxneighbours; ++i) {
 			anu[i] = an[i];
 		}
 	}
-	filterunknown(f, anu);
+	filterunknown(anu);
 
 	{
 		int i;
-		for (i = 0; i < f->maxneighbours; ++i) {
+		for (i = 0; i < this->f->maxneighbours; ++i) {
 			int bidx = an[i];
 			if (bidx == -1) continue;
-			Tile *b = &f->tiles[bidx];
+			Tile *b = &this->f->tiles[bidx];
 
 			if (!(b->flags & TILE_PRESSED)) continue;
 
 			// get b's neighbourhood
-			int bn[f->maxneighbours];
-			f->neighbourhood(bidx, (int *) bn);
+			int bn[this->f->maxneighbours];
+			this->f->neighbourhood(bidx, (int *) bn);
 
 			// get b's bomb neighbour count minus already flagged bombs
 			int bnb = b->neighbours;
 			{
 				int i;
-				for (i = 0; i < f->maxneighbours; ++i) {
+				for (i = 0; i < this->f->maxneighbours; ++i) {
 					if (bn[i] == -1) continue;
-					if (f->tiles[bn[i]].flags & TILE_FLAGGED) {
+					if (this->f->tiles[bn[i]].flags & TILE_FLAGGED) {
 						--bnb;
 					}
 				}
 			}
 
 			// get b's unknown neighbourhood (unflagged, unpressed)
-			int bnu[f->maxneighbours];
+			int bnu[this->f->maxneighbours];
 			{
 				int i;
-				for (i = 0; i < f->maxneighbours; ++i) {
+				for (i = 0; i < this->f->maxneighbours; ++i) {
 					bnu[i] = bn[i];
 				}
 			}
-			filterunknown(f, bnu);
+			filterunknown(bnu);
 
-			neighbourdifference(f, bnu, anu);
+			neighbourdifference(bnu, anu);
 
 			int count = 0;
 			{
 				int i;
-				for (i = 0; i < f->maxneighbours; ++i) {
+				for (i = 0; i < this->f->maxneighbours; ++i) {
 					if (bnu[i] != -1) ++count;
 				}
 			}
@@ -214,14 +214,14 @@ ACT(act_dualcheck) {
 			Action act;
 			if (count == bnb-anb) {
 				act.type = FLAG;
-			} else if (issubset(bnu, anu, f->maxneighbours) && bnb == anb) {
+			} else if (issubset(bnu, anu, this->f->maxneighbours) && bnb == anb) {
 				act.type = PRESS;
 			} else {
 				continue;
 			}
 			Action **res = new Action*[count+1];
 			int i, j = 0;
-			for (i = 0; i < f->maxneighbours; ++i) {
+			for (i = 0; i < this->f->maxneighbours; ++i) {
 				act.tileidx = bnu[i];
 				if (act.tileidx == -1) continue;
 				res[j] = new Action;
@@ -237,16 +237,16 @@ ACT(act_dualcheck) {
 #undef GETTILE
 #undef ACT
 
-Action **AI::act(Minefield *f) {
+Action **AI::act() {
 #define ACT(method) {\
-	Action **ret = this->method(f, idx);\
+	Action **ret = this->method(idx);\
 	if (ret != NULL) {\
-		if (f->sleep) {\
-			f->resetmarks();\
-			f->mark(idx, 1);\
+		if (this->f->sleep) {\
+			this->f->resetmarks();\
+			this->f->mark(idx, 1);\
 			int i;\
 			for (i = 0; ret[i] != NULL; ++i) {\
-				f->mark(ret[i]->tileidx, 2);\
+				this->f->mark(ret[i]->tileidx, 2);\
 			}\
 		}\
 		this->allowcoordreset = 1;\
@@ -254,16 +254,16 @@ Action **AI::act(Minefield *f) {
 		char msg[256];\
 		snprintf(msg, 255, "AI used %s\n", #method);\
 		msg[255] = 0;\
-		((Screen *) f->scr)->speak(f, msg);\
-		printtile(f, idx);\
+		((Screen *) this->f->scr)->speak(this->f, msg);\
+		printtile(this->f, idx);\
 		*/\
 		return ret;\
 	}\
 }
 	// first, try the simple calculation on all tiles. act_singlecheck only calls
 	// neighbourhood() once and some counting functions per call.
-	while (this->hasnexttile(f)) {
-		int idx = this->nexttileidx(f);
+	while (this->hasnexttile()) {
+		int idx = this->nexttileidx();
 		ACT(act_singlecheck);
 	}
 	// once we've exhausted the playing field (run through from top to bottom
@@ -273,8 +273,8 @@ Action **AI::act(Minefield *f) {
 	// slow operation! if we have a match, return it. next time, start over with
 	// simple calculations.
 	this->allowcoordreset = 1;
-	while (this->hasnexttile(f)) {
-		int idx = this->nexttileidx(f);
+	while (this->hasnexttile()) {
+		int idx = this->nexttileidx();
 		ACT(act_dualcheck);
 	}
 	// we've exhausted the playing field twice now. we give up since the board is
@@ -295,13 +295,8 @@ void AI::free(Action **act) {
 	delete act;
 }
 
-void AI::init(Minefield *f) {
-}
-
-void AI::deinit(Minefield *f) {
-}
-
 AI::AI(Minefield *f) {
+	this->f = f;
 	this->allowcoordreset = 0;
 	this->nexttileidx_ = 0;
 }
