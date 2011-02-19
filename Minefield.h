@@ -33,6 +33,13 @@ public:
 	/* whether we should sleep occasionally */
 	bool sleep;
 
+	/* set dimensions and settings automatically and display usage options */
+	bool usage;
+	
+	/* arguments used to run the program */
+	int argc;
+	char **argv;
+
 	/* Tiles. */
 	Tile *tiles;
 
