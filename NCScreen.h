@@ -5,20 +5,11 @@
 #include "Minefield.h"
 #include "Screen.h"
 
-typedef struct _NCmark NCmark;
-
-struct _NCmark {
+typedef struct _NCmark {
 	int idx;
 	int mark;
-	NCmark *next;
-};
-
-struct NCscreen {
-	WINDOW *field;
-	WINDOW *speak;
-	bool colors;
-	NCmark *mark;
-};
+	struct _NCmark *next;
+} NCmark;
 
 class NCScreen : public Screen<NCScreen> {
 	public:
@@ -32,8 +23,13 @@ class NCScreen : public Screen<NCScreen> {
 		void resetmarks();
 		WINDOW *getField();
 	private:
-		NCscreen *nc;
 		Minefield *f;
+
+		WINDOW *field;
+		WINDOW *speak;
+		bool colors;
+		NCmark *marks;
+
 		void puttile(chtype ch, int mark);
 		void updatetile_mark(int idx, int mark);
 		void freemarks();

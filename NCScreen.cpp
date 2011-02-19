@@ -26,25 +26,22 @@
 typedef struct NCscreen NC;
 
 void NCScreen::freemarks() {
-	NCmark *mark = this->nc->mark;
+	NCmark *mark = this->marks;
 	while (mark != NULL) {
 		NCmark *m = mark;
 		mark = m->next;
 		delete m;
 	}
-	this->nc->mark = NULL;
+	this->marks = NULL;
 }
 
 void NCScreen::deinit() {
 	curs_set(1);
 	endwin();
-	delwin(this->nc->field);
-	delwin(this->nc->speak);
+	delwin(this->field);
+	delwin(this->speak);
 
 	this->freemarks();
-
-	delete this->nc;
-	this->nc = NULL;
 }
 
 NCScreen::NCScreen(Minefield *f) {
@@ -52,17 +49,14 @@ NCScreen::NCScreen(Minefield *f) {
 }
 
 void NCScreen::init() {
-
-	this->nc = new NC;
-
 	initscr();
 	cbreak();
 	noecho();
 	curs_set(0);
 
-	this->nc->colors = has_colors();
+	this->colors = has_colors();
 
-	if (this->nc->colors) {
+	if (this->colors) {
 		start_color();
 		init_pair(PAIR_VOID, COLOR_WHITE, COLOR_BLACK);
 		init_pair(PAIR_WALL, COLOR_YELLOW, COLOR_BLACK);
@@ -82,32 +76,28 @@ void NCScreen::init() {
 	getmaxyx(stdscr, wh, ww);
 
 	/* allocate field of given size */
-	this->nc->field = newwin(height, width, 0, 0);
+	this->field = newwin(height, width, 0, 0);
 
 	int cw = ww-width;
 	if (cw < 0) cw = 0;
 	int ch = wh-height;
 	if (ch < 0) ch = 0;
 	if (ch*10 > cw) {
-		this->nc->speak = newwin(0, 0, height, 0);
+		this->speak = newwin(0, 0, height, 0);
 	} else {
-		this->nc->speak = newwin(0, 0, 0, width);
+		this->speak = newwin(0, 0, 0, width);
 	}
-	scrollok(this->nc->speak, TRUE);
-	wrefresh(this->nc->field);
-	wrefresh(this->nc->speak);
+	scrollok(this->speak, TRUE);
+	wrefresh(this->field);
+	wrefresh(this->speak);
 	refresh();
 
-	this->nc->mark = NULL;
+	this->marks = NULL;
 }
 
 void NCScreen::puttile(chtype ch, int mark) {
 	char tile = ch & A_CHARTEXT;
-	if (this->nc == NULL) {
-		putchar(tile);
-		return;
-	}
-	WINDOW *w = this->nc->field;
+	WINDOW *w = this->field;
 	if (tile == '/') {
 		ch = ACS_DIAMOND;
 	} else if (tile == '.') {
@@ -132,11 +122,7 @@ void NCScreen::puttile(chtype ch, int mark) {
 }
 
 void NCScreen::updatefield(const char *field) {
-	if (this->nc == NULL) {
-		printf("%s", field);
-		return;
-	}
-	WINDOW *w = this->nc->field;
+	WINDOW *w = this->field;
 	const int lineoffset = this->f->outputwidth+1;
 	const chtype lines[] = {
 		/* 0bABCD: A : above, B : right, C: below, D: left */
@@ -146,7 +132,7 @@ void NCScreen::updatefield(const char *field) {
 		ACS_VLINE, ACS_LRCORNER, ACS_VLINE, ACS_RTEE, /* 10xx */
 		ACS_LLCORNER, ACS_BTEE, ACS_LTEE, ACS_PLUS /* 11xx */
 	};
-	if (this->nc->colors) {
+	if (this->colors) {
 		wmove(w, 0, 0);
 		int x = 0;
 		int y = 0;
@@ -180,13 +166,10 @@ void NCScreen::updatefield(const char *field) {
 }
 
 void NCScreen::updatetile_mark(int idx, int mark) {
-	if (this->nc == NULL) {
-		return;
-	}
 	int row = this->f->outputrow(f->idxtocoords(idx));
 	int column = this->f->outputcolumn(f->idxtocoords(idx));
 	char c = tilechar(f->tiles+idx);
-	WINDOW *w = this->nc->field;
+	WINDOW *w = this->field;
 	wmove(w, row, column);
 	puttile(c, mark);
 	wrefresh(w);
@@ -197,11 +180,7 @@ void NCScreen::updatetile(int idx) {
 }
 
 void NCScreen::vspeak(const char *fmt, va_list argp) {
-	if (this->nc == NULL) {
-		vprintf(fmt, argp);
-		return;
-	}
-	WINDOW *s = this->nc->speak;
+	WINDOW *s = this->speak;
 	vwprintw(s, fmt, argp);
 	wrefresh(s);
 }
@@ -210,13 +189,13 @@ void NCScreen::mark(int idx, int mark) {
 	NCmark *add = new NCmark;
 	add->idx = idx;
 	add->mark = mark;
-	add->next = this->nc->mark;
-	this->nc->mark = add;
+	add->next = this->marks;
+	this->marks = add;
 	this->updatetile_mark(idx, mark);
 }
 
 void NCScreen::resetmarks() {
-	NCmark *m = this->nc->mark;
+	NCmark *m = this->marks;
 	while (m != NULL) {
 		updatetile_mark(m->idx, 0);
 		m = m->next;
@@ -225,5 +204,5 @@ void NCScreen::resetmarks() {
 }
 
 WINDOW *NCScreen::getField() {
-	return this->nc->field;
+	return this->field;
 }
