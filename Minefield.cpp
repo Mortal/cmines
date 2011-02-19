@@ -365,7 +365,28 @@ bool isnumber(const char *c) {
 
 int main(int argc, char *argv[]) {
 	Minefield *f = new Minefield;
-	return f->main(argc, argv);
+	int ret = f->main(argc, argv);
+	delete f;
+	return ret;
+}
+
+Minefield::~Minefield() {
+	if (this->coordinatesets != NULL) {
+		delete this->coordinatesets;
+		this->coordinatesets = NULL;
+	}
+	if (this->tiles != NULL) {
+		delete this->tiles;
+		this->tiles = NULL;
+	}
+	if (this->dimensions != NULL) {
+		delete this->dimensions;
+		this->dimensions = NULL;
+	}
+	if (this->dimensionproducts != NULL) {
+		delete this->dimensionproducts;
+		this->dimensionproducts = NULL;
+	}
 }
 
 int Minefield::main(int argc, char *argv[]) {
@@ -449,8 +470,8 @@ int Minefield::main(int argc, char *argv[]) {
 		}
 	}
 
-	this->tiles = 0;
-	this->coordinatesets = 0;
+	this->tiles = NULL;
+	this->coordinatesets = NULL;
 
 	if (!hasseed) {
 		srand(time(NULL) & 0xFFFFFFFF);
@@ -524,12 +545,6 @@ void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
 		}
 	}
 	printf(" --mines %d --seed %d --expect %s\n", this->mines, this->seed, expect);
-
-	delete (this->coordinatesets);
-	delete (this->tiles);
-	delete (this->dimensions);
-	delete (this->dimensionproducts);
-	delete (this);
 }
 
 template <class ConcreteScreen>
