@@ -83,7 +83,28 @@ public:
 	void mark(int idx, int mark);
 	void resetmarks();
 
-	int main(int argc, char *argv[]);
+	void play();
+
+	/* Some statistics. */
+	int mines;
+	int presseds;
+	int flaggeds;
+
+	/* seed passed to srand() before generating the minefield. */
+	unsigned int seed;
+
+	/* whether mines was set automatically */
+	bool automines;
+
+	/* expected result (arbitrary string) */
+	const char *expect;
+
+	bool ai; /* use AI? */
+
+#define SCREEN_DUMB (0)
+#define SCREEN_NCURSES (1)
+#define SCREEN_SILENT (2)
+	int screentype;
 
 private:
 	template <class ConcreteScreen>
@@ -96,23 +117,9 @@ private:
 
 	enum FieldState state;
 
-	/* Some statistics. */
-	int mines;
-	int presseds;
-	int flaggeds;
-
-	/* whether mines was set automatically */
-	bool automines;
-
 	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
 	 * Accessed via idxtocoords and coordstoidx. */
 	Coordinate *coordinatesets;
-
-	/* seed passed to srand() before generating the minefield. */
-	unsigned int seed;
-
-	/* expected result (arbitrary string) */
-	const char *expect;
 
 	/* neighbourhood helper */
 	void neighbourhood2(int root, int *neighbours, Dimension d, int times);
@@ -131,8 +138,6 @@ private:
 	void flag(int idx);
 
 	template <class ConcreteScreen> void flushredraws(Screen<ConcreteScreen> *);
-
-	bool ai; /* use AI? */
 
 	std::queue<int> redrawtiles;
 	std::queue<Mark> marks;

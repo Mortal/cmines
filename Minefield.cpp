@@ -367,10 +367,85 @@ bool isnumber(const char *c) {
 }
 
 int main(int argc, char *argv[]) {
+	if (argc <= 2) {
+		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
+		return 1;
+	}
 	Minefield *f = new Minefield;
-	int ret = f->main(argc, argv);
+	bool hasseed = 0;
+	int i;
+	for (i = 1; i < argc; ++i) {
+		const char *arg = argv[i];
+		if (isnumber(arg)) {
+			int dim = strtol(arg, NULL, 0);
+			if (dim < 1) {
+				fprintf(stderr, "Invalid argument %d\n", dim);
+				exit(1);
+			} else if (dim > 1) {
+				++f->effectivedimcount;
+			}
+			++f->dimcount;
+		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed") || !strcmp(arg, "--expect")) {
+			// takes an argument, so skip that
+			++i;
+		}
+	}
+	f->dimensions = new Coordinate[f->dimcount];
+	f->dimensionproducts = new Coordinate[f->dimcount];
+	Dimension d = f->dimcount;
+	for (i = 1; i < argc; ++i) {
+		const char *arg = argv[i];
+		if (isnumber(arg)) {
+			int dim = strtol(arg, NULL, 0);
+			int j;
+			--d;
+			if (i == 1) {
+				for (j = 0; j < d; ++j) f->dimensionproducts[j] = dim;
+				f->dimensionproducts[d] = 1;
+			}
+			else for (j = 0; j < d; ++j) f->dimensionproducts[j] *= dim;
+			f->dimensions[d] = dim;
+		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
+			++i;
+			const char *arg2 = argv[i];
+			if (isnumber(arg2)) {
+				int mines = strtol(arg2, NULL, 0);
+				if (mines < 1) {
+					fprintf(stderr, "Invalid argument %d\n", mines);
+					exit(1);
+				}
+				f->mines = mines;
+				f->automines = 0;
+			}
+		} else if (!strcmp(arg, "--seed")) {
+			++i;
+			const char *arg2 = argv[i];
+			if (isnumber(arg2)) {
+				int seed = strtol(arg2, NULL, 0);
+				f->seed = seed;
+				hasseed = 1;
+			}
+		} else if (!strcmp(arg, "--expect")) {
+			++i;
+			f->expect = argv[i];
+		} else if (!strcmp(arg, "--ncurses")) {
+			f->screentype = SCREEN_NCURSES;
+		} else if (!strcmp(arg, "--silent")) {
+			f->screentype = SCREEN_SILENT;
+		} else if (!strcmp(arg, "--manual")) {
+			f->ai = 0;
+		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
+			f->sleep = 1;
+		}
+	}
+
+	if (!hasseed) {
+		srand(time(NULL) & 0xFFFFFFFF);
+		f->seed = rand();
+	}
+	f->play();
 	delete f;
-	return ret;
+	return 0;
 }
 
 Minefield::Minefield():
@@ -384,15 +459,16 @@ Minefield::Minefield():
 	maxneighbours(0),
 	outputwidth(0),
 	outputheight(0),
-	state(STATE_INIT),
 	mines(0),
 	presseds(0),
 	flaggeds(0),
-	automines(1),
-	coordinatesets(NULL),
 	seed(0),
+	automines(1),
 	expect(NULL),
 	ai(1),
+	screentype(SCREEN_DUMB),
+	state(STATE_INIT),
+	coordinatesets(NULL),
 	shouldredrawfield(0),
 	shouldresetmarks(0)
 {
@@ -410,93 +486,19 @@ Minefield::~Minefield() {
 	this->neighbourhood_reallyfree();
 }
 
-int Minefield::main(int argc, char *argv[]) {
-	if (argc <= 2) {
-		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
-		exit(1);
-	}
-	bool hasseed = 0;
-	int i;
-	for (i = 1; i < argc; ++i) {
-		const char *arg = argv[i];
-		if (isnumber(arg)) {
-			int dim = strtol(arg, NULL, 0);
-			if (dim < 1) {
-				fprintf(stderr, "Invalid argument %d\n", dim);
-				exit(1);
-			} else if (dim > 1) {
-				++this->effectivedimcount;
-			}
-			++this->dimcount;
-		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m") || !strcmp(arg, "--seed") || !strcmp(arg, "--expect")) {
-			// takes an argument, so skip that
-			++i;
-		}
-	}
-	this->dimensions = new Coordinate[this->dimcount];
-	this->dimensionproducts = new Coordinate[this->dimcount];
-	Dimension d = this->dimcount;
-#define SCREEN_DUMB (0)
-#define SCREEN_NCURSES (1)
-#define SCREEN_SILENT (2)
-	int screentype = 0;
-	for (i = 1; i < argc; ++i) {
-		const char *arg = argv[i];
-		if (isnumber(arg)) {
-			int dim = strtol(arg, NULL, 0);
-			int j;
-			--d;
-			if (i == 1) {
-				for (j = 0; j < d; ++j) this->dimensionproducts[j] = dim;
-				this->dimensionproducts[d] = 1;
-			}
-			else for (j = 0; j < d; ++j) this->dimensionproducts[j] *= dim;
-			this->dimensions[d] = dim;
-		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
-			++i;
-			const char *arg2 = argv[i];
-			if (isnumber(arg2)) {
-				int mines = strtol(arg2, NULL, 0);
-				if (mines < 1) {
-					fprintf(stderr, "Invalid argument %d\n", mines);
-					exit(1);
-				}
-				this->mines = mines;
-				this->automines = 0;
-			}
-		} else if (!strcmp(arg, "--seed")) {
-			++i;
-			const char *arg2 = argv[i];
-			if (isnumber(arg2)) {
-				int seed = strtol(arg2, NULL, 0);
-				this->seed = seed;
-				hasseed = 1;
-			}
-		} else if (!strcmp(arg, "--expect")) {
-			++i;
-			this->expect = argv[i];
-		} else if (!strcmp(arg, "--ncurses")) {
-			screentype = SCREEN_NCURSES;
-		} else if (!strcmp(arg, "--silent")) {
-			screentype = SCREEN_SILENT;
-		} else if (!strcmp(arg, "--manual")) {
-			this->ai = 0;
-		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
-			this->sleep = 1;
-		}
-	}
-
-	if (!hasseed) {
-		srand(time(NULL) & 0xFFFFFFFF);
-		this->seed = rand();
-	}
+void Minefield::play() {
 	srand(this->seed);
+	this->alloctiles();
+	this->resettiles();
+	this->calcmines();
+	this->setmines();
+	this->pressrandom(1);
 
 #define PLAYSCREEN(SCREEN) {SCREEN *scr = new SCREEN(this);\
 	this->playscreen(scr);\
 	delete scr;\
 }
-	switch (screentype) {
+	switch (this->screentype) {
 		case SCREEN_NCURSES:
 			PLAYSCREEN(NCScreen);
 			break;
@@ -507,16 +509,10 @@ int Minefield::main(int argc, char *argv[]) {
 			PLAYSCREEN(DumbScreen);
 			break;
 	}
-	return 0;
 }
 
 template <class ConcreteScreen>
 void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
-	this->alloctiles();
-	this->resettiles();
-	this->calcmines();
-	this->setmines();
-	this->pressrandom(1);
 	scr->init();
 	scr->speak("Seed: %u\n", this->seed);
 	this->redrawfield();
