@@ -25,23 +25,11 @@
 
 typedef struct NCscreen NC;
 
-void NCScreen::freemarks() {
-	NCmark *mark = this->marks;
-	while (mark != NULL) {
-		NCmark *m = mark;
-		mark = m->next;
-		delete m;
-	}
-	this->marks = NULL;
-}
-
 void NCScreen::deinit() {
 	curs_set(1);
 	endwin();
 	delwin(this->field);
 	delwin(this->speak);
-
-	this->freemarks();
 }
 
 NCScreen::NCScreen(Minefield *f) {
@@ -91,8 +79,6 @@ void NCScreen::init() {
 	wrefresh(this->field);
 	wrefresh(this->speak);
 	refresh();
-
-	this->marks = NULL;
 }
 
 void NCScreen::puttile(chtype ch, int mark) {
@@ -186,21 +172,19 @@ void NCScreen::vspeak(const char *fmt, va_list argp) {
 }
 
 void NCScreen::mark(int idx, int mark) {
-	NCmark *add = new NCmark;
-	add->idx = idx;
-	add->mark = mark;
-	add->next = this->marks;
-	this->marks = add;
+	Mark add;
+	add.idx = idx;
+	add.mark = mark;
+	this->marks.push(add);
 	this->updatetile_mark(idx, mark);
 }
 
 void NCScreen::resetmarks() {
-	NCmark *m = this->marks;
-	while (m != NULL) {
-		updatetile_mark(m->idx, 0);
-		m = m->next;
+	while (!this->marks.empty()) {
+		Mark m = this->marks.front();
+		updatetile_mark(m.idx, 0);
+		this->marks.pop();
 	}
-	freemarks();
 }
 
 WINDOW *NCScreen::getField() {

@@ -2,14 +2,9 @@
 #define NCSCREEN_H
 
 #include <ncurses.h>
+#include <queue>
 #include "Minefield.h"
 #include "Screen.h"
-
-typedef struct _NCmark {
-	int idx;
-	int mark;
-	struct _NCmark *next;
-} NCmark;
 
 class NCScreen : public Screen<NCScreen> {
 	public:
@@ -28,7 +23,7 @@ class NCScreen : public Screen<NCScreen> {
 		WINDOW *field;
 		WINDOW *speak;
 		bool colors;
-		NCmark *marks;
+		std::queue<Mark> marks;
 
 		void puttile(chtype ch, int mark);
 		void updatetile_mark(int idx, int mark);
