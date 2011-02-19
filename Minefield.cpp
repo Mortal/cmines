@@ -249,20 +249,6 @@ void Minefield::resetmarks() {
 	this->shouldresetmarks = true;
 }
 
-void ripple_push(PressRipple *r, int idx) {
-	if ((r->last+1) % r->length == r->first) {r->overflow = 1; return;}
-	r->tilestart[r->last] = idx;
-	//printf("Push %d=%d\n", r->last, idx);
-	r->last = (r->last+1)%r->length;
-}
-
-int ripple_pop(PressRipple *r) {
-	int val = r->tilestart[r->first];
-	//printf("Pop %d=%d\n", r->first, val);
-	r->first = (r->first+1)%r->length;
-	return val;
-}
-
 bool Minefield::simplepress(int idx) {
 #ifdef DEBUG
 	assert(idx >= 0 && idx <= this->tilecount);
@@ -290,51 +276,30 @@ bool Minefield::simplepress(int idx) {
 	return 1;
 }
 
-void Minefield::ripplepress(PressRipple *r) {
-	int idx = ripple_pop(r);
+void Minefield::ripplepress(int idx, std::queue<int> *queue) {
 	if (!this->simplepress(idx)) return;
 	Tile *tile = &this->tiles[idx];
-	if (tile->neighbours || r->overflow) return;
+	if (tile->neighbours) return;
 	int *neighbours = this->neighbourhood(idx);
 	int i;
-	for (i = 0; !r->overflow && i < this->maxneighbours; ++i) {
+	for (i = 0; i < this->maxneighbours; ++i) {
 		if (neighbours[i] == -1) continue;
-		ripple_push(r, neighbours[i]);
+		queue->push(neighbours[i]);
 	}
 	this->neighbourhood_free(neighbours);
-}
-
-void Minefield::handlepressoverflow() {
-	bool allowreset = 0;
-	int idx;
-	for (idx = 0; idx < this->tilecount || (allowreset && !(idx = 0) && !(allowreset = 0)); ++idx) {
-		Tile *t = &this->tiles[idx];
-		if (!(t->flags & TILE_PRESSED) || t->flags & TILE_FLAGGED || t->neighbours) continue;
-		int *neighbours = this->neighbourhood(idx);
-		int i;
-		for (i = 0; i < this->maxneighbours; ++i) {
-			if (neighbours[i] == -1) continue;
-			if (this->simplepress(neighbours[i])) allowreset = 1;
-		}
-		this->neighbourhood_free(neighbours);
-	}
 }
 
 void Minefield::press(int idx) {
 #ifdef DEBUG
 	assert(idx >= 0 && idx <= this->tilecount);
 #endif
-	PressRipple r;
-	int length = 1024;
-	int positions[length];
-	r.length = length;
-	r.tilestart = positions;
-	r.first = r.last = 0;
-	ripple_push(&r, idx);
-	while (r.first != r.last) {
-		this->ripplepress(&r);
+	std::queue<int> tilestopress;
+	tilestopress.push(idx);
+	while (!tilestopress.empty()) {
+		int tile = tilestopress.front();
+		tilestopress.pop();
+		this->ripplepress(tile, &tilestopress);
 	}
-	if (r.overflow) this->handlepressoverflow();
 }
 
 void Minefield::flag(int idx) {

@@ -10,14 +10,6 @@
 
 char tilechar(Tile *tile);
 
-typedef struct {
-	int *tilestart;
-	int length;
-	int first;
-	int last;
-	bool overflow;
-} PressRipple;
-
 class Minefield {
 public:
 	/* Field dimensions, most significant dimension first.
@@ -121,8 +113,7 @@ private:
 
 	void press(int idx);
 	bool simplepress(int idx);
-	void ripplepress(PressRipple *);
-	void handlepressoverflow();
+	void ripplepress(int idx, std::queue<int> *);
 
 	void pressrandom(bool blanksonly);
 	void pressblanks();
