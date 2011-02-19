@@ -399,22 +399,15 @@ Minefield::Minefield():
 }
 
 Minefield::~Minefield() {
-	if (this->coordinatesets != NULL) {
-		delete this->coordinatesets;
-		this->coordinatesets = NULL;
+#define MAYBEFREE(prop) if (this->prop != NULL) {\
+		delete this->prop;\
+		this->prop = NULL;\
 	}
-	if (this->tiles != NULL) {
-		delete this->tiles;
-		this->tiles = NULL;
-	}
-	if (this->dimensions != NULL) {
-		delete this->dimensions;
-		this->dimensions = NULL;
-	}
-	if (this->dimensionproducts != NULL) {
-		delete this->dimensionproducts;
-		this->dimensionproducts = NULL;
-	}
+	MAYBEFREE(coordinatesets);
+	MAYBEFREE(tiles);
+	MAYBEFREE(dimensions);
+	MAYBEFREE(dimensionproducts);
+	this->neighbourhood_reallyfree();
 }
 
 int Minefield::main(int argc, char *argv[]) {
