@@ -171,10 +171,7 @@ void NCScreen::vspeak(const char *fmt, va_list argp) {
 	wrefresh(s);
 }
 
-void NCScreen::mark(int idx, int mark) {
-	Mark add;
-	add.idx = idx;
-	add.mark = mark;
+void NCScreen::mark(Mark add) {
 	this->marks.push(add);
 	this->updatetile_mark(idx, mark);
 }

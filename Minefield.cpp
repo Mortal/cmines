@@ -559,7 +559,7 @@ void Minefield::flushredraws(Screen<ConcreteScreen> *scr) {
 	if (this->marks != NULL) {
 		while (!this->marks->empty()) {
 			Mark *m = this->marks->front();
-			scr->mark(m->idx, m->mark);
+			scr->mark(*m);
 			this->marks->pop();
 		}
 	}
