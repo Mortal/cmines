@@ -225,10 +225,7 @@ void Minefield::checkstate() {
 }
 
 void Minefield::redrawtile(int idx) {
-	if (this->redrawtiles == NULL) {
-		this->redrawtiles = new std::queue<int>();
-	}
-	this->redrawtiles->push(idx);
+	this->redrawtiles.push(idx);
 }
 
 void Minefield::redrawfield() {
@@ -236,13 +233,10 @@ void Minefield::redrawfield() {
 }
 
 void Minefield::mark(int idx, int mark) {
-	if (this->marks == NULL) {
-		this->marks = new std::queue<Mark*>();
-	}
-	Mark *m = new Mark;
-	m->idx = idx;
-	m->mark = mark;
-	this->marks->push(m);
+	Mark m;
+	m.idx = idx;
+	m.mark = mark;
+	this->marks.push(m);
 }
 
 void Minefield::resetmarks() {
@@ -546,22 +540,18 @@ void Minefield::flushredraws(Screen<ConcreteScreen> *scr) {
 		scr->updatefield(output);
 		this->shouldredrawfield = false;
 	}
-	if (this->redrawtiles != NULL) {
-		while (!this->redrawtiles->empty()) {
-			scr->updatetile(this->redrawtiles->front());
-			this->redrawtiles->pop();
-		}
+	while (!this->redrawtiles.empty()) {
+		scr->updatetile(this->redrawtiles.front());
+		this->redrawtiles.pop();
 	}
 	if (this->shouldresetmarks) {
 		scr->resetmarks();
 		this->shouldresetmarks = false;
 	}
-	if (this->marks != NULL) {
-		while (!this->marks->empty()) {
-			Mark *m = this->marks->front();
-			scr->mark(*m);
-			this->marks->pop();
-		}
+	while (!this->marks.empty()) {
+		Mark m = this->marks.front();
+		scr->mark(m);
+		this->marks.pop();
 	}
 }
 

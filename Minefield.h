@@ -124,8 +124,8 @@ private:
 
 	bool ai; /* use AI? */
 
-	std::queue<int> *redrawtiles;
-	std::queue<Mark *> *marks;
+	std::queue<int> redrawtiles;
+	std::queue<Mark> marks;
 	bool shouldredrawfield;
 	bool shouldresetmarks;
 };

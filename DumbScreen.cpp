@@ -22,7 +22,7 @@ void DumbScreen::vspeak(const char *fmt, va_list argp) {
 	vprintf(fmt, argp);
 }
 
-void DumbScreen::mark(int idx, int mark) {
+void DumbScreen::mark(Mark mark) {
 }
 
 void DumbScreen::resetmarks() {

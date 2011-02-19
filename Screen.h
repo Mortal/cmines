@@ -20,7 +20,7 @@ template <class ConcreteScreen> class Screen {
 		void updatefield(const char *field) {CALL(updatefield, field);}
 		void updatetile(int idx) {CALL(updatetile, idx);}
 		void vspeak(const char *fmt, va_list args) {CALL(vspeak, fmt, args);}
-		void mark(int idx, int mark) {CALL(mark, idx, mark);}
+		void mark(Mark mark) {CALL(mark, mark);}
 		void resetmarks() {CALL(resetmarks);}
 		void speak(const char *fmt, ...) {
 			va_list argp;
