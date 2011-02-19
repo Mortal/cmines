@@ -370,6 +370,31 @@ int main(int argc, char *argv[]) {
 	return ret;
 }
 
+Minefield::Minefield():
+	dimensions(NULL),
+	dimensionproducts(NULL),
+	dimcount(0),
+	effectivedimcount(0),
+	sleep(0),
+	tiles(NULL),
+	tilecount(0),
+	maxneighbours(0),
+	outputwidth(0),
+	outputheight(0),
+	state(STATE_INIT),
+	mines(0),
+	presseds(0),
+	flaggeds(0),
+	automines(1),
+	coordinatesets(NULL),
+	seed(0),
+	expect(NULL),
+	ai(1),
+	shouldredrawfield(0),
+	shouldresetmarks(0)
+{
+}
+
 Minefield::~Minefield() {
 	if (this->coordinatesets != NULL) {
 		delete this->coordinatesets;
@@ -390,16 +415,11 @@ Minefield::~Minefield() {
 }
 
 int Minefield::main(int argc, char *argv[]) {
-	this->dimcount = 0;
-	this->automines = 1;
-	this->sleep = 0;
-	this->expect = NULL;
 	if (argc <= 2) {
 		fprintf(stderr, "Usage: %s <width> <height> [<depth> [...]] [--mines <mines>]\n", argv[0]);
 		exit(1);
 	}
 	bool hasseed = 0;
-	this->ai = 1;
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -469,9 +489,6 @@ int Minefield::main(int argc, char *argv[]) {
 			this->sleep = 1;
 		}
 	}
-
-	this->tiles = NULL;
-	this->coordinatesets = NULL;
 
 	if (!hasseed) {
 		srand(time(NULL) & 0xFFFFFFFF);

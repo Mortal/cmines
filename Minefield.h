@@ -12,6 +12,7 @@ char tilechar(Tile *tile);
 
 class Minefield {
 public:
+	Minefield();
 	~Minefield();
 
 	/* Field dimensions, most significant dimension first.
