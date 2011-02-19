@@ -116,6 +116,12 @@ int Minefield::coordstoidx(Coordinate *c) {
 	return idx;
 }
 
+void Minefield::neighbourhood(int root, int *neighbours) {
+	memset(neighbours, -1, sizeof(int)*(this->maxneighbours));
+	neighbours[0] = root;
+	this->neighbourhood2(root, neighbours, 0, 3);
+}
+
 void Minefield::neighbourhood2(int root, int *neighbours, Dimension d, int times) {
 	if (d >= this->dimcount) return;
 	int i, inc = this->maxneighbours/times;
@@ -139,37 +145,6 @@ void Minefield::neighbourhood2(int root, int *neighbours, Dimension d, int times
 		if (inc == 1 && neighbours[i2] == root) neighbours[i2] = -1;
 	}
 	this->neighbourhood2(root, neighbours, d+1, times*3);
-}
-
-void Minefield::neighbourhood(int root, int *neighbours) {
-	memset(neighbours, -1, sizeof(int)*(this->maxneighbours));
-	neighbours[0] = root;
-	this->neighbourhood2(root, neighbours, 0, 3);
-	return;
-
-	int idx = 0;
-	Dimension dim;
-	for (dim = 0; dim < this->dimcount; ++dim) {
-		int tile = root;
-		int i;
-		int l = idx;
-		for (i = 0; tile == root || i < l; tile = neighbours[(tile == root) ? i : ++i]) {
-			Coordinate *basis = this->idxtocoords(tile);
-			if (basis[dim]) {
-				int i2 = tile-this->dimensionproducts[dim];
-				neighbours[idx] = i2;
-				idx++;
-			}
-			if (1+basis[dim] < this->dimensions[dim]) {
-				int i2 = tile+this->dimensionproducts[dim];
-				neighbours[idx] = i2;
-				idx++;
-			}
-		}
-	}
-	for (; idx < this->maxneighbours; ++idx) {
-		neighbours[idx] = -1;
-	}
 }
 
 void Minefield::resettiles() {
