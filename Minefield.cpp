@@ -180,8 +180,21 @@ void Minefield::resettiles() {
 }
 
 void Minefield::calcmines() {
-	if (this->automines)
+	if (this->automines) {
 		this->mines = this->tilecount/(this->effectivedimcount*this->effectivedimcount*this->effectivedimcount);
+		if (this->ai) {
+			switch (this->effectivedimcount) {
+				case 1:
+				case 2:
+					break;
+				case 3:
+					this->mines = this->mines*5/2;
+					break;
+				default:
+					this->mines = this->mines*7/2;
+			}
+		}
+	}
 }
 
 void Minefield::setmines() {
