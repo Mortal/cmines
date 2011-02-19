@@ -116,10 +116,29 @@ int Minefield::coordstoidx(Coordinate *c) {
 	return idx;
 }
 
-void Minefield::neighbourhood(int root, int *neighbours) {
+int *Minefield::neighbourhood(int root) {
+	int *neighbours;
+	if (!this->neighbourhoods.empty()) {
+		neighbours = this->neighbourhoods.front();
+		this->neighbourhoods.pop();
+	} else {
+		neighbours = new int[sizeof(int)*(this->maxneighbours)];
+	}
 	memset(neighbours, -1, sizeof(int)*(this->maxneighbours));
 	neighbours[0] = root;
 	this->neighbourhood2(root, neighbours, 0, 3);
+	return neighbours;
+}
+
+void Minefield::neighbourhood_free(int *neighbours) {
+	this->neighbourhoods.push(neighbours);
+}
+
+void Minefield::neighbourhood_reallyfree() {
+	while (!this->neighbourhoods.empty()) {
+		delete this->neighbourhoods.front();
+		this->neighbourhoods.pop();
+	}
 }
 
 void Minefield::neighbourhood2(int root, int *neighbours, Dimension d, int times) {
@@ -173,12 +192,12 @@ void Minefield::setmines() {
 		assert(idx < this->tilecount);
 #endif
 		this->tiles[idx].flags |= TILE_MINE;
-		int neighbours[this->maxneighbours];
-		this->neighbourhood(idx, (int *) neighbours);
+		int *neighbours = this->neighbourhood(idx);
 		for (j = 0; j < this->maxneighbours; ++j) {
 			if (-1 == neighbours[j]) continue;
 			++this->tiles[neighbours[j]].neighbours;
 		}
+		this->neighbourhood_free(neighbours);
 	}
 }
 
@@ -189,13 +208,13 @@ void Minefield::recalcneighbours() {
 	}
 	for (i = 0; i < this->tilecount; ++i) {
 		if (!(this->tiles[i].flags & TILE_MINE)) continue;
-		int neighbours[this->maxneighbours];
-		this->neighbourhood(i, (int *) neighbours);
+		int *neighbours = this->neighbourhood(i);
 		int j;
 		for (j = 0; j < this->maxneighbours; ++j) {
 			if (-1 == neighbours[j]) continue;
 			++this->tiles[neighbours[j]].neighbours;
 		}
+		this->neighbourhood_free(neighbours);
 	}
 }
 
@@ -276,13 +295,13 @@ void Minefield::ripplepress(PressRipple *r) {
 	if (!this->simplepress(idx)) return;
 	Tile *tile = &this->tiles[idx];
 	if (tile->neighbours || r->overflow) return;
-	int neighbours[this->maxneighbours];
-	this->neighbourhood(idx, (int *) neighbours);
+	int *neighbours = this->neighbourhood(idx);
 	int i;
 	for (i = 0; !r->overflow && i < this->maxneighbours; ++i) {
 		if (neighbours[i] == -1) continue;
 		ripple_push(r, neighbours[i]);
 	}
+	this->neighbourhood_free(neighbours);
 }
 
 void Minefield::handlepressoverflow() {
@@ -291,13 +310,13 @@ void Minefield::handlepressoverflow() {
 	for (idx = 0; idx < this->tilecount || (allowreset && !(idx = 0) && !(allowreset = 0)); ++idx) {
 		Tile *t = &this->tiles[idx];
 		if (!(t->flags & TILE_PRESSED) || t->flags & TILE_FLAGGED || t->neighbours) continue;
-		int neighbours[this->maxneighbours];
-		this->neighbourhood(idx, (int *) neighbours);
+		int *neighbours = this->neighbourhood(idx);
 		int i;
 		for (i = 0; i < this->maxneighbours; ++i) {
 			if (neighbours[i] == -1) continue;
 			if (this->simplepress(neighbours[i])) allowreset = 1;
 		}
+		this->neighbourhood_free(neighbours);
 	}
 }
 

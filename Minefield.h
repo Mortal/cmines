@@ -63,7 +63,8 @@ public:
 	/* Get the neighbouring indices of the tile at the given index and store them
 	 * in `neighbours'. This output array should contain at least `maxneighbours'
 	 * pointers to Coordinate sets, initially set to zero. */
-	void neighbourhood(int idx, int *neighbours);
+	int *neighbourhood(int idx);
+	void neighbourhood_free(int *neighbours);
 
 	/* Various functions to initialise the global variables and create the game
 	 * field. */
@@ -113,6 +114,10 @@ private:
 
 	/* neighbourhood helper */
 	void neighbourhood2(int root, int *neighbours, Dimension d, int times);
+	/* allocated neighbourhood arrays that aren't in use */
+	std::queue<int *> neighbourhoods;
+	/* dealloc all in neighbourhoods */
+	void neighbourhood_reallyfree();
 
 	void press(int idx);
 	bool simplepress(int idx);

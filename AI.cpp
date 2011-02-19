@@ -86,8 +86,7 @@ ACT(act_singlecheck) {
 	GETTILE(tile);
 	if (!(tile->flags & TILE_PRESSED)) return NULL;
 	if (!tile->neighbours) return NULL;
-	int neighbours[this->f->maxneighbours];
-	this->f->neighbourhood(idx, (int *) neighbours);
+	int *neighbours = this->f->neighbourhood(idx);
 	int neighbourunknown = countunknown((int *) neighbours);
 	if (!neighbourunknown) return NULL;
 	int neighbourflags = countflags((int *) neighbours);
@@ -97,6 +96,7 @@ ACT(act_singlecheck) {
 	} else if (tile->neighbours == neighbourunknown + neighbourflags) {
 		act.type = FLAG;
 	} else {
+		this->f->neighbourhood_free(neighbours);
 		return NULL;
 	}
 
@@ -114,6 +114,7 @@ ACT(act_singlecheck) {
 		}
 	}
 	ret[retidx] = NULL;
+	this->f->neighbourhood_free(neighbours);
 	return ret;
 }
 
@@ -140,8 +141,7 @@ ACT(act_dualcheck) {
 	 */
 
 	// get a's neighbourhood
-	int an[this->f->maxneighbours];
-	this->f->neighbourhood(idx, (int *) an);
+	int *an = this->f->neighbourhood(idx);
 
 	// get a's bomb neighbour count minus already flagged bombs
 	int anb = a->neighbours;
@@ -167,7 +167,13 @@ ACT(act_dualcheck) {
 
 	{
 		int i;
+		int *bn = NULL;
 		for (i = 0; i < this->f->maxneighbours; ++i) {
+			if (bn != NULL) {
+				this->f->neighbourhood_free(bn);
+				bn = NULL;
+			}
+
 			int bidx = an[i];
 			if (bidx == -1) continue;
 			Tile *b = &this->f->tiles[bidx];
@@ -175,8 +181,7 @@ ACT(act_dualcheck) {
 			if (!(b->flags & TILE_PRESSED)) continue;
 
 			// get b's neighbourhood
-			int bn[this->f->maxneighbours];
-			this->f->neighbourhood(bidx, (int *) bn);
+			bn = this->f->neighbourhood(bidx);
 
 			// get b's bomb neighbour count minus already flagged bombs
 			int bnb = b->neighbours;
@@ -229,9 +234,16 @@ ACT(act_dualcheck) {
 				j++;
 			}
 			res[j] = NULL;
+			this->f->neighbourhood_free(an);
+			this->f->neighbourhood_free(bn);
 			return res;
 		}
+		if (bn != NULL) {
+			this->f->neighbourhood_free(bn);
+			bn = NULL;
+		}
 	}
+	this->f->neighbourhood_free(an);
 	return NULL;
 }
 #undef GETTILE
