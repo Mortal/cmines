@@ -7,6 +7,8 @@
 #include "NCScreen.h"
 
 #include <queue>
+#include <vector>
+#include <string>
 
 char tilechar(Tile *tile);
 
@@ -37,8 +39,7 @@ public:
 	bool usage;
 	
 	/* arguments used to run the program */
-	int argc;
-	char **argv;
+	std::vector<std::string> *args;
 
 	/* Tiles. */
 	Tile *tiles;

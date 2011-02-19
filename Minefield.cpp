@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #ifdef DEBUG
 #include <assert.h>
 #endif
@@ -380,33 +381,36 @@ bool isnumber(const char *c) {
 }
 
 int main(int argc, char *argv[]) {
+	std::vector<std::string> args(argc);
+	{
+		int i;
+		for (i = 0; i < argc; ++i) {
+			args[i] = argv[i];
+		}
+	}
+	printf("%d\n", argc);
 	Minefield *f = new Minefield;
 	if (argc <= 2) {
 		f->usage = 1;
 		initscr();
 		int x, y;
 		getmaxyx(stdscr, y, x); // get terminal size into x and y
-		int argsc = 5;
-		char **args = new char*[argsc];
-		args[0] = argv[0];
-		args[1] = new char[16];
-		snprintf(args[1], 15, "%d", x); args[1][15] = 0;
-		args[2] = new char[16];
-		snprintf(args[2], 15, "%d", 2*y/3); args[2][15] = 0;
-		args[3] = new char[10];
-		strcpy(args[3], "--ncurses");
-		args[4] = new char[3];
-		strcpy(args[4], "-s");
-		f->argc = argc = argsc;
-		f->argv = argv = args;
-	} else {
-		f->argc = argc;
-		f->argv = argv;
+		argc = 5;
+		args.resize(argc);
+		char arg[16];
+		snprintf(arg, 15, "%d", x); arg[15] = 0;
+		args[1] = arg;
+		snprintf(arg, 15, "%d", 2*y/3); arg[15] = 0;
+		args[2] = arg;
+		args[3] = "--ncurses";
+		args[4] = "-s";
 	}
+	f->args = &args;
 	bool hasseed = 0;
 	int i;
 	for (i = 1; i < argc; ++i) {
-		const char *arg = argv[i];
+		const char *arg = args[i].c_str();
+		printf("%s ", arg);
 		if (isnumber(arg)) {
 			int dim = strtol(arg, NULL, 0);
 			if (dim < 1) {
@@ -425,7 +429,7 @@ int main(int argc, char *argv[]) {
 	f->dimensionproducts = new Coordinate[f->dimcount];
 	Dimension d = f->dimcount;
 	for (i = 1; i < argc; ++i) {
-		const char *arg = argv[i];
+		const char *arg = args[i].c_str();
 		if (isnumber(arg)) {
 			int dim = strtol(arg, NULL, 0);
 			int j;
@@ -438,7 +442,7 @@ int main(int argc, char *argv[]) {
 			f->dimensions[d] = dim;
 		} else if (!strcmp(arg, "--mines") || !strcmp(arg, "-m")) {
 			++i;
-			const char *arg2 = argv[i];
+			const char *arg2 = args[i].c_str();
 			if (isnumber(arg2)) {
 				int mines = strtol(arg2, NULL, 0);
 				if (mines < 1) {
@@ -450,7 +454,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (!strcmp(arg, "--seed")) {
 			++i;
-			const char *arg2 = argv[i];
+			const char *arg2 = args[i].c_str();
 			if (isnumber(arg2)) {
 				int seed = strtol(arg2, NULL, 0);
 				f->seed = seed;
@@ -458,7 +462,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (!strcmp(arg, "--expect")) {
 			++i;
-			f->expect = argv[i];
+			f->expect = args[i].c_str();
 		} else if (!strcmp(arg, "--ncurses")) {
 			f->screentype = SCREEN_NCURSES;
 		} else if (!strcmp(arg, "--silent")) {
@@ -548,10 +552,11 @@ void Minefield::playscreen(Screen<ConcreteScreen> *scr) {
 	scr->init();
 	if (this->usage) {
 		scr->speak("Welcome to Minesweeper! Usage: %s <width> <height> [<depth> [...]] [--mines <n>] [--manual] [--ncurses] [--sleep] [--seed <n>]\n"
-				"This game was started with the default arguments: ", this->argv[0]);
+				"This game was started with the default arguments: ", (*this->args)[0].c_str());
 		int i;
-		for (i = 1; i < this->argc; ++i) {
-			scr->speak("%s ", this->argv[i]);
+		int argc = (*this->args).size();
+		for (i = 1; i < argc; ++i) {
+			scr->speak("%s ", (*this->args)[i].c_str());
 		}
 		scr->speak("\n");
 	}
