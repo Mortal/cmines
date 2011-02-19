@@ -388,7 +388,6 @@ int main(int argc, char *argv[]) {
 			args[i] = argv[i];
 		}
 	}
-	printf("%d\n", argc);
 	Minefield *f = new Minefield;
 	if (argc <= 2) {
 		f->usage = 1;
@@ -410,7 +409,6 @@ int main(int argc, char *argv[]) {
 	int i;
 	for (i = 1; i < argc; ++i) {
 		const char *arg = args[i].c_str();
-		printf("%s ", arg);
 		if (isnumber(arg)) {
 			int dim = strtol(arg, NULL, 0);
 			if (dim < 1) {
