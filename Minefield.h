@@ -52,8 +52,11 @@ public:
 	Coordinate *idxtocoords(int idx);
 
 	/* Convert coordinates to tile index. When passed a pointer into
-	 * `coordinatesets', calculates index by pointer arithmetic. */
+	 * `coordinatesets', calculates index by pointer arithmetic.
+	 * Note that this function is not actually used by anything */
+#ifdef DEBUG
 	int coordstoidx(Coordinate *c);
+#endif
 
 	/* Get the neighbouring indices of the tile at the given index and store them
 	 * in `neighbours'. This output array should contain at least `maxneighbours'
@@ -67,7 +70,11 @@ public:
 	void resettiles();
 	void calcmines();
 	void setmines();
+
+	/* Recalculate each tiles 'neighbours' count. Use after manipulating tile
+	 * flags (which is considered cheating!) */
 	void recalcneighbours();
+
 	void printfield(char *);
 
 	void redrawtile(int idx);

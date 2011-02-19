@@ -103,6 +103,8 @@ Coordinate *Minefield::idxtocoords(int idx) {
 	return this->coordinatesets+idx*this->dimcount;
 }
 
+#ifdef DEBUG
+// not used by anything
 int Minefield::coordstoidx(Coordinate *c) {
 	if (c >= this->coordinatesets && c < this->coordinatesets+this->dimcount*this->tilecount) {
 		return (c-this->coordinatesets)/this->dimcount;
@@ -115,6 +117,7 @@ int Minefield::coordstoidx(Coordinate *c) {
 	}
 	return idx;
 }
+#endif
 
 int *Minefield::neighbourhood(int root) {
 	int *neighbours;
