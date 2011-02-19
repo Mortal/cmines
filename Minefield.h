@@ -28,14 +28,15 @@ public:
 	 * i, i+1, ..., dimensioncount-1 */
 	Coordinate *dimensionproducts;
 
-	enum FieldState state;
-
 	/* Number of entries in `dimensions'. */
 	Dimension dimcount;
 
 	/* Number of entries in `dimensions' that aren't equal to 1.
 	 * For mine calculation. */
 	Dimension effectivedimcount;
+
+	/* whether we should sleep occasionally */
+	bool sleep;
 
 	/* Tiles. */
 	Tile *tiles;
@@ -44,29 +45,8 @@ public:
 	int tilecount;
 	int maxneighbours;
 
-	/* Some statistics. */
-	int mines;
-	int presseds;
-	int flaggeds;
-
-	/* whether mines was set automatically */
-	bool automines;
-
 	int outputwidth;
 	int outputheight;
-
-	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
-	 * Accessed via idxtocoords and coordstoidx. */
-	Coordinate *coordinatesets;
-
-	/* whether we should sleep occasionally */
-	bool sleep;
-
-	/* seed passed to srand() before generating the minefield. */
-	unsigned int seed;
-
-	/* expected result (arbitrary string) */
-	const char *expect;
 
 	/* Get the column and row of the tile in the terminal/ncurses output. */
 	int outputcolumn(Coordinate *tile);
@@ -110,6 +90,26 @@ private:
 
 	/* Check if the game is over */
 	void checkstate();
+
+	enum FieldState state;
+
+	/* Some statistics. */
+	int mines;
+	int presseds;
+	int flaggeds;
+
+	/* whether mines was set automatically */
+	bool automines;
+
+	/* Coordinate sets. Contains tilecount*dimcount Coordinates.
+	 * Accessed via idxtocoords and coordstoidx. */
+	Coordinate *coordinatesets;
+
+	/* seed passed to srand() before generating the minefield. */
+	unsigned int seed;
+
+	/* expected result (arbitrary string) */
+	const char *expect;
 
 	/* neighbourhood helper */
 	void neighbourhood2(int root, int *neighbours, Dimension d, int times);
