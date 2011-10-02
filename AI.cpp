@@ -21,26 +21,6 @@ int AI::nexttileidx() {
 	return this->nexttileidx_ = 0;
 }
 
-template <typename CB>
-void AI::filter(Minefield * f, int * neighbours, CB * cb) {
-	int dest = 0;
-	int i;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		int idx = neighbours[i];
-		if (idx == -1) continue;
-		const Tile & tile = f->tiles[idx];
-		if (cb(tile)) {
-			if (i != dest) {
-				neighbours[dest] = neighbours[i];
-			}
-			++dest;
-		}
-	}
-	while (dest < f->maxneighbours) {
-		neighbours[dest++] = -1;
-	}
-}
-
 class countunknown_cb {
 public:
 	countunknown_cb(const Tile * tiles) : tiles(tiles) {}
@@ -69,12 +49,19 @@ int AI::countflags(const int *neighbours) const {
 	return std::count_if(neighbours, neighbours + this->f->maxneighbours, countflags_cb(f->tiles));
 }
 
-inline bool filterunknown_cb(const Tile & tile) {
-	return !(tile.flags & (TILE_PRESSED|TILE_FLAGGED));
-}
+class filterunknown_cb {
+public:
+	filterunknown_cb(const Tile * tiles) : tiles(tiles) {}
+	bool operator()(const int & tile) {
+		return tile >= 0 && (tiles[tile].flags & (TILE_PRESSED|TILE_FLAGGED));
+	}
+private:
+	const Tile * tiles;
+};
 
-void AI::filterunknown(int * neighbours) {
-	filter(this->f, neighbours, &filterunknown_cb);
+void AI::filterunknown(int * neighbours) const {
+	int * end = std::remove_if(neighbours, neighbours+f->maxneighbours, filterunknown_cb(f->tiles));
+	std::fill(end, neighbours+f->maxneighbours, -1);
 }
 
 void AI::neighbourdifference(int *c, int *set) {

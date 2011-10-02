@@ -19,9 +19,7 @@ class AI : public Player<AI> {
 		bool hasnexttile();
 		int nexttileidx();
 
-		template<typename CB>
-		static void filter(Minefield * f, int * neighbours, CB * cb);
-		void filterunknown(int *);
+		void filterunknown(int *) const;
 		int countunknown(const int *) const;
 		int countflags(const int *) const;
 		void neighbourdifference(int *, int *);
