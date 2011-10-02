@@ -10,7 +10,7 @@
 #include <vector>
 #include <string>
 
-char tilechar(Tile *tile);
+char tilechar(const Tile & tile);
 
 class Minefield {
 public:
@@ -41,11 +41,22 @@ public:
 	/* arguments used to run the program */
 	std::vector<std::string> *args;
 
-	/* Tiles. */
-	Tile *tiles;
+	const Tile & tile(int idx) const {
+		return tiles[idx];
+	}
 
-	/* Number of entries in `tiles'. */
-	int tilecount;
+	int getTilecount() const {
+		return tilecount;
+	}
+
+	const Tile * tiles_begin() const {
+		return tiles;
+	}
+
+	const Tile * tiles_end() const {
+		return &tiles[tilecount];
+	}
+
 	int maxneighbours;
 
 	int outputwidth;
@@ -119,6 +130,12 @@ private:
 	void playscreen(class Screen<ConcreteScreen> *scr);
 	template <class ConcreteScreen, class ConcretePlayer>
 	void playgame(class Screen<ConcreteScreen> *scr, class Player<ConcretePlayer> *ply);
+
+	/* Tiles. */
+	Tile *tiles;
+
+	/* Number of entries in `tiles'. */
+	int tilecount;
 
 	/* Check if the game is over */
 	void checkstate();

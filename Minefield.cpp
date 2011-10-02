@@ -15,13 +15,13 @@
 #include "AI.h"
 #include "NCPlayer.h"
 
-char tilechar(Tile *tile) {
-	if (tile->flags & TILE_FLAGGED) return '/';
-	if (!(tile->flags & TILE_PRESSED)) return '.';
-	if (tile->flags & TILE_MINE) return '@';
-	if (tile->neighbours < 1) return ' ';
-	if (tile->neighbours < 10) return '0'+tile->neighbours;
-	if (tile->neighbours < 36) return 'A'+tile->neighbours-10;
+char tilechar(const Tile & tile) {
+	if (tile.flags & TILE_FLAGGED) return '/';
+	if (!(tile.flags & TILE_PRESSED)) return '.';
+	if (tile.flags & TILE_MINE) return '@';
+	if (tile.neighbours < 1) return ' ';
+	if (tile.neighbours < 10) return '0'+tile.neighbours;
+	if (tile.neighbours < 36) return 'A'+tile.neighbours-10;
 	return 'Z';
 }
 
@@ -338,7 +338,7 @@ void Minefield::printfield(char *output) {
 		for (idx = 0; idx < this->tilecount; ++idx) {
 			int row = this->outputrow(this->idxtocoords(idx));
 			int column = this->outputcolumn(this->idxtocoords(idx));
-			output[row*(w+1)+column] = tilechar(this->tiles+idx);
+			output[row*(w+1)+column] = tilechar(this->tile(idx));
 		}
 	}
 	output[(w+1)*h] = '\0';
@@ -488,8 +488,6 @@ Minefield::Minefield():
 	effectivedimcount(0),
 	sleep(0),
 	usage(0),
-	tiles(NULL),
-	tilecount(0),
 	maxneighbours(0),
 	outputwidth(0),
 	outputheight(0),
@@ -501,6 +499,8 @@ Minefield::Minefield():
 	expect(NULL),
 	ai(1),
 	screentype(SCREEN_DUMB),
+	tiles(NULL),
+	tilecount(0),
 	state(STATE_INIT),
 	coordinatesets(NULL),
 	shouldredrawfield(0),

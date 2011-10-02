@@ -42,7 +42,8 @@ Action **NCPlayer::act() {
 		act->type = PRESS;
 		act->tileidx = d->cursidx;
 	} else if (ch == 'z') {
-		this->f->tiles[d->cursidx].flags ^= TILE_MINE;
+		// casting const reference to reference in order to cheat!
+		((Tile &) this->f->tile(d->cursidx)).flags ^= TILE_MINE;
 		this->f->recalcneighbours();
 		this->f->redrawfield();
 	} else {
@@ -53,9 +54,9 @@ Action **NCPlayer::act() {
 			}
 			int delta = this->f->dimensionproducts[this->f->dimcount-i-1];
 			if (ch == deckeys[i]) delta = -delta;
-			if (-delta > d->cursidx) d->cursidx += this->f->tilecount;
+			if (-delta > d->cursidx) d->cursidx += this->f->getTilecount();
 			d->cursidx += delta;
-			d->cursidx %= this->f->tilecount;
+			d->cursidx %= this->f->getTilecount();
 		}
 	}
 	this->setcursor();

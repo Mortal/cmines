@@ -10,11 +10,11 @@ void AI::giveup(Action *act) {
 }
 
 bool AI::hasnexttile() {
-	return (this->allowcoordreset || this->nexttileidx_ < this->f->tilecount);
+	return (this->allowcoordreset || this->nexttileidx_ < this->f->getTilecount());
 }
 
 int AI::nexttileidx() {
-	if (this->nexttileidx_ < this->f->tilecount) {
+	if (this->nexttileidx_ < this->f->getTilecount()) {
 		return this->nexttileidx_++;
 	}
 	this->allowcoordreset = 0;
@@ -24,26 +24,26 @@ int AI::nexttileidx() {
 /* If the given tile has at least one of the given flags set, returns `result'
  * for the given tile. */
 template<int flags, bool result>
-class tilecounter_flag {
+class tilebyflag {
 public:
-	tilecounter_flag(const Tile * tiles) : tiles(tiles) {}
+	tilebyflag(const Minefield & field) : field(field) {}
 	bool operator()(const int & tile) {
-		return tile >= 0 && !result == !(tiles[tile].flags & flags);
+		return tile >= 0 && !result == !(field.tile(tile).flags & flags);
 	}
 private:
-	const Tile * tiles;
+	const Minefield & field;
 };
 
 int AI::countunknown(const int *neighbours) const {
 	// `unknown' tiles are tiles that are neither pressed nor flagged
 	return std::count_if(neighbours, neighbours + this->f->maxneighbours,
-		tilecounter_flag<TILE_PRESSED|TILE_FLAGGED, false>(f->tiles));
+		tilebyflag<TILE_PRESSED|TILE_FLAGGED, false>(*f));
 }
 
 int AI::countflags(const int *neighbours) const {
 	// flagged tiles have the TILE_FLAGGED flag set
 	return std::count_if(neighbours, neighbours + this->f->maxneighbours,
-		tilecounter_flag<TILE_FLAGGED, true>(f->tiles));
+		tilebyflag<TILE_FLAGGED, true>(*f));
 }
 
 class filterunknown_cb {
@@ -57,7 +57,8 @@ private:
 };
 
 void AI::filterunknown(int * neighbours) const {
-	int * end = std::remove_if(neighbours, neighbours+f->maxneighbours, filterunknown_cb(f->tiles));
+	int * end = std::remove_if(neighbours, neighbours+f->maxneighbours,
+			tilebyflag<TILE_PRESSED|TILE_FLAGGED, true>(*f));
 	std::fill(end, neighbours+f->maxneighbours, -1);
 }
 
@@ -92,7 +93,7 @@ void AI::neighbourdifference(int *c, const int *set) {
 }
 
 #define ACT(method) Action **AI::method(int idx)
-#define GETTILE(tile) const Tile & tile = this->f->tiles[idx]
+#define GETTILE(var) const Tile & var = this->f->tile(idx)
 
 ACT(act_singlecheck) {
 	GETTILE(tile);
@@ -118,8 +119,8 @@ ACT(act_singlecheck) {
 	for (i = 0; i < this->f->maxneighbours; ++i) {
 		int idx = neighbours[i];
 		if (idx == -1) continue;
-		Tile *t = &this->f->tiles[idx];
-		if (!(t->flags & (TILE_PRESSED|TILE_FLAGGED))) {
+		const Tile & t = this->f->tile(idx);
+		if (!(t.flags & (TILE_PRESSED|TILE_FLAGGED))) {
 			act.tileidx = idx;
 			Action *pact = ret[retidx++] = new Action;
 			*pact = act;
@@ -154,7 +155,7 @@ ACT(act_dualcheck) {
 		int i;
 		for (i = 0; i < this->f->maxneighbours; ++i) {
 			if (an[i] == -1) continue;
-			if (this->f->tiles[an[i]].flags & TILE_FLAGGED) {
+			if (this->f->tile(an[i]).flags & TILE_FLAGGED) {
 				--anb;
 			}
 		}
@@ -181,7 +182,7 @@ ACT(act_dualcheck) {
 
 			int bidx = an[i];
 			if (bidx == -1) continue;
-			const Tile & b = this->f->tiles[bidx];
+			const Tile & b = this->f->tile(bidx);
 
 			if (!(b.flags & TILE_PRESSED)) continue;
 
@@ -194,7 +195,7 @@ ACT(act_dualcheck) {
 				int i;
 				for (i = 0; i < this->f->maxneighbours; ++i) {
 					if (bn[i] == -1) continue;
-					if (this->f->tiles[bn[i]].flags & TILE_FLAGGED) {
+					if (this->f->tile(bn[i]).flags & TILE_FLAGGED) {
 						--bnb;
 					}
 				}

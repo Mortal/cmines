@@ -154,7 +154,7 @@ void NCScreen::updatefield(const char *field) {
 void NCScreen::updatetile_mark(int idx, int mark) {
 	int row = this->f->outputrow(f->idxtocoords(idx));
 	int column = this->f->outputcolumn(f->idxtocoords(idx));
-	char c = tilechar(f->tiles+idx);
+	char c = tilechar(f->tile(idx));
 	WINDOW *w = this->field;
 	wmove(w, row, column);
 	puttile(c, mark);
