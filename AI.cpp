@@ -20,45 +20,64 @@ int AI::nexttileidx() {
 	return this->nexttileidx_ = 0;
 }
 
-#define COUNTER(fun, cb) \
-int AI::fun(int *neighbours) {\
-	int i;\
-	int matches = 0;\
-	for (i = 0; i < this->f->maxneighbours; ++i) {\
-		int idx = neighbours[i];\
-		if (idx == -1) continue;\
-		Tile *tile = &this->f->tiles[idx];\
-		if (cb) {\
-			++matches;\
-		}\
-	}\
-	return matches;\
+template <typename CB>
+int AI::counter(Minefield * f, int *neighbours, CB * cb) {
+	int i;
+	int matches = 0;
+	for (i = 0; i < f->maxneighbours; ++i) {
+		int idx = neighbours[i];
+		if (idx == -1) continue;
+		const Tile & tile = f->tiles[idx];
+		if (cb(tile)) {
+			++matches;
+		}
+	}
+	return matches;
 }
 
-#define FILTER(fun, cb) \
-void AI::fun(int *c) {\
-	int dest = 0;\
-	int i;\
-	for (i = 0; i < this->f->maxneighbours; ++i) {\
-		int idx = c[i];\
-		if (idx == -1) continue;\
-		Tile *tile = &this->f->tiles[idx];\
-		if (cb) {\
-			if (i != dest) {\
-				c[dest] = c[i];\
-			}\
-			++dest;\
-		}\
-	}\
-	while (dest < this->f->maxneighbours) {\
-		c[dest++] = -1;\
-	}\
+template <typename CB>
+void AI::filter(Minefield * f, int * neighbours, CB * cb) {
+	int dest = 0;
+	int i;
+	for (i = 0; i < f->maxneighbours; ++i) {
+		int idx = neighbours[i];
+		if (idx == -1) continue;
+		const Tile & tile = f->tiles[idx];
+		if (cb(tile)) {
+			if (i != dest) {
+				neighbours[dest] = neighbours[i];
+			}
+			++dest;
+		}
+	}
+	while (dest < f->maxneighbours) {
+		neighbours[dest++] = -1;
+	}
 }
 
-FILTER(filterunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
-COUNTER(countunknown, !(tile->flags & (TILE_PRESSED|TILE_FLAGGED)))
-COUNTER(countflags, !!(tile->flags & TILE_FLAGGED))
-#undef CB
+static bool countunknown_cb(const Tile & tile) {
+	return !(tile.flags & (TILE_PRESSED|TILE_FLAGGED));
+}
+
+static bool countflags_cb(const Tile & tile) {
+	return !!(tile.flags & TILE_FLAGGED);
+}
+
+int AI::countunknown(int *neighbours) {
+	return counter(this->f, neighbours, &countunknown_cb);
+}
+
+int AI::countflags(int *neighbours) {
+	return counter(this->f, neighbours, &countflags_cb);
+}
+
+static bool filterunknown_cb(const Tile & tile) {
+	return !(tile.flags & (TILE_PRESSED|TILE_FLAGGED));
+}
+
+void AI::filterunknown(int * neighbours) {
+	filter(this->f, neighbours, &filterunknown_cb);
+}
 
 void AI::neighbourdifference(int *c, int *set) {
 	int i, j, k; /* i is read-index in c, j is write-index is c, k is read-index in set */
