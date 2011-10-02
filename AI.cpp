@@ -133,15 +133,8 @@ ACT(act_singlecheck) {
 	return ret;
 }
 
-bool AI::issubset(int *superset, int *subset, int length) {
-	int i, j; /* i is index in subset, j in superset */
-	for (i = 0, j = 0; i < length; ++i) {
-		int tofind = subset[i];
-		if (tofind == -1) continue;
-		while (j < length && superset[j] == -1) ++j;
-		if (j >= length || superset[j] != tofind) return 0;
-	}
-	return 1;
+bool AI::issubset(const int *superset, const int *subset, int length) {
+	return std::includes(&superset[0], &superset[length], &subset[0], &subset[length]);
 }
 
 

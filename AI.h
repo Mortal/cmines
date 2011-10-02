@@ -24,7 +24,7 @@ class AI : public Player<AI> {
 		int countflags(const int *) const;
 		void neighbourdifference(int * A, const int * B); // Removes all of B from A
 
-		bool issubset(int *superset, int *subset, int length);
+		static bool issubset(const int *superset, const int *subset, int length);
 		Action **act_singlecheck(int idx);
 		Action **act_dualcheck(int idx);
 };
