@@ -21,32 +21,29 @@ int AI::nexttileidx() {
 	return this->nexttileidx_ = 0;
 }
 
-class countunknown_cb {
+/* If the given tile has at least one of the given flags set, returns `result'
+ * for the given tile. */
+template<int flags, bool result>
+class tilecounter_flag {
 public:
-	countunknown_cb(const Tile * tiles) : tiles(tiles) {}
+	tilecounter_flag(const Tile * tiles) : tiles(tiles) {}
 	bool operator()(const int & tile) {
-		return tile >= 0 && !(tiles[tile].flags & (TILE_PRESSED|TILE_FLAGGED));
-	}
-private:
-	const Tile * tiles;
-};
-
-class countflags_cb {
-public:
-	countflags_cb(const Tile * tiles) : tiles(tiles) {}
-	bool operator()(const int & tile) {
-		return tile >= 0 && !!(tiles[tile].flags & TILE_FLAGGED);
+		return tile >= 0 && !result == !(tiles[tile].flags & flags);
 	}
 private:
 	const Tile * tiles;
 };
 
 int AI::countunknown(const int *neighbours) const {
-	return std::count_if(neighbours, neighbours + this->f->maxneighbours, countunknown_cb(f->tiles));
+	// `unknown' tiles are tiles that are neither pressed nor flagged
+	return std::count_if(neighbours, neighbours + this->f->maxneighbours,
+		tilecounter_flag<TILE_PRESSED|TILE_FLAGGED, false>(f->tiles));
 }
 
 int AI::countflags(const int *neighbours) const {
-	return std::count_if(neighbours, neighbours + this->f->maxneighbours, countflags_cb(f->tiles));
+	// flagged tiles have the TILE_FLAGGED flag set
+	return std::count_if(neighbours, neighbours + this->f->maxneighbours,
+		tilecounter_flag<TILE_FLAGGED, true>(f->tiles));
 }
 
 class filterunknown_cb {
