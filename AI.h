@@ -22,7 +22,7 @@ class AI : public Player<AI> {
 		void filterunknown(int *) const;
 		int countunknown(const int *) const;
 		int countflags(const int *) const;
-		void neighbourdifference(int *, int *);
+		void neighbourdifference(int * A, const int * B); // Removes all of B from A
 
 		bool issubset(int *superset, int *subset, int length);
 		Action **act_singlecheck(int idx);

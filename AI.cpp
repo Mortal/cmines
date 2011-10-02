@@ -64,23 +64,34 @@ void AI::filterunknown(int * neighbours) const {
 	std::fill(end, neighbours+f->maxneighbours, -1);
 }
 
-void AI::neighbourdifference(int *c, int *set) {
-	int i, j, k; /* i is read-index in c, j is write-index is c, k is read-index in set */
-	int length = this->f->maxneighbours;
-	for (i = 0, j = 0, k = 0; i < length; ++i) {
-		int tofind = c[i];
-		if (tofind == -1) continue;
-		while (k < length && set[k] < tofind) ++k;
-		if (set[k] == tofind) continue;
-		if (i != j) {
-			c[j] = c[i];
-		}
-		++j;
+template <typename IT, typename T>
+class _sortedsetremove {
+public:
+	_sortedsetremove(IT begin, IT end) : begin(begin), end(end) {}
+	bool operator()(const T & el) {
+		while (begin != end && *begin < el)
+			++begin;
+		return el == *begin;
 	}
-	while (j < length) {
-		c[j] = -1;
-		++j;
-	}
+private:
+	IT begin;
+	IT end;
+};
+
+template <typename T>
+_sortedsetremove<T*, T> sortedsetremove(T* begin, T* end) {
+	return _sortedsetremove<T*, T>(begin, end);
+}
+
+void AI::neighbourdifference(int *c, const int *set) {
+	/* This is a more efficient way of saying
+	 * int output[f->maxneighbours];
+	 * int * end = std::set_difference(c, c+f->maxneighbours, set, set+f->maxneighbours, output);
+	 * std::fill(end, &output[f->maxneighbours], -1);
+	 * std::copy(&output[0], &output[f->maxneighbours], c);
+	 * (using `output' since destination can't overlap source in set_difference) */
+	int * end = std::remove_if(&c[0], &c[f->maxneighbours], sortedsetremove(&set[0], &set[f->maxneighbours]));
+	std::fill(end, &c[f->maxneighbours], -1);
 }
 
 #define ACT(method) Action **AI::method(int idx)
