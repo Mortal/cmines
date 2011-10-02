@@ -3,6 +3,7 @@
 #include "AI.h"
 #include "Player.h"
 #include "Screen.h"
+#include <algorithm>
 
 void AI::giveup(Action *act) {
 	act->type = GIVEUP;
@@ -18,21 +19,6 @@ int AI::nexttileidx() {
 	}
 	this->allowcoordreset = 0;
 	return this->nexttileidx_ = 0;
-}
-
-template <typename CB>
-int AI::counter(Minefield * f, int *neighbours, CB * cb) {
-	int i;
-	int matches = 0;
-	for (i = 0; i < f->maxneighbours; ++i) {
-		int idx = neighbours[i];
-		if (idx == -1) continue;
-		const Tile & tile = f->tiles[idx];
-		if (cb(tile)) {
-			++matches;
-		}
-	}
-	return matches;
 }
 
 template <typename CB>
@@ -55,23 +41,35 @@ void AI::filter(Minefield * f, int * neighbours, CB * cb) {
 	}
 }
 
-static bool countunknown_cb(const Tile & tile) {
-	return !(tile.flags & (TILE_PRESSED|TILE_FLAGGED));
+class countunknown_cb {
+public:
+	countunknown_cb(const Tile * tiles) : tiles(tiles) {}
+	bool operator()(const int & tile) {
+		return tile >= 0 && !(tiles[tile].flags & (TILE_PRESSED|TILE_FLAGGED));
+	}
+private:
+	const Tile * tiles;
+};
+
+class countflags_cb {
+public:
+	countflags_cb(const Tile * tiles) : tiles(tiles) {}
+	bool operator()(const int & tile) {
+		return tile >= 0 && !!(tiles[tile].flags & TILE_FLAGGED);
+	}
+private:
+	const Tile * tiles;
+};
+
+int AI::countunknown(const int *neighbours) const {
+	return std::count_if(neighbours, neighbours + this->f->maxneighbours, countunknown_cb(f->tiles));
 }
 
-static bool countflags_cb(const Tile & tile) {
-	return !!(tile.flags & TILE_FLAGGED);
+int AI::countflags(const int *neighbours) const {
+	return std::count_if(neighbours, neighbours + this->f->maxneighbours, countflags_cb(f->tiles));
 }
 
-int AI::countunknown(int *neighbours) {
-	return counter(this->f, neighbours, &countunknown_cb);
-}
-
-int AI::countflags(int *neighbours) {
-	return counter(this->f, neighbours, &countflags_cb);
-}
-
-static bool filterunknown_cb(const Tile & tile) {
+inline bool filterunknown_cb(const Tile & tile) {
 	return !(tile.flags & (TILE_PRESSED|TILE_FLAGGED));
 }
 
