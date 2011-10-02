@@ -95,20 +95,20 @@ void AI::neighbourdifference(int *c, const int *set) {
 }
 
 #define ACT(method) Action **AI::method(int idx)
-#define GETTILE(tile) Tile *tile = &this->f->tiles[idx]
+#define GETTILE(tile) const Tile & tile = this->f->tiles[idx]
 
 ACT(act_singlecheck) {
 	GETTILE(tile);
-	if (!(tile->flags & TILE_PRESSED)) return NULL;
-	if (!tile->neighbours) return NULL;
+	if (!(tile.flags & TILE_PRESSED)) return NULL;
+	if (!tile.neighbours) return NULL;
 	int *neighbours = this->f->neighbourhood(idx);
 	int neighbourunknown = countunknown((int *) neighbours);
 	if (!neighbourunknown) return NULL;
 	int neighbourflags = countflags((int *) neighbours);
 	Action act;
-	if (tile->neighbours == neighbourflags) {
+	if (tile.neighbours == neighbourflags) {
 		act.type = PRESS;
-	} else if (tile->neighbours == neighbourunknown + neighbourflags) {
+	} else if (tile.neighbours == neighbourunknown + neighbourflags) {
 		act.type = FLAG;
 	} else {
 		this->f->neighbourhood_free(neighbours);
@@ -152,7 +152,7 @@ ACT(act_dualcheck) {
 	int *an = this->f->neighbourhood(idx);
 
 	// get a's bomb neighbour count minus already flagged bombs
-	int anb = a->neighbours;
+	int anb = a.neighbours;
 	{
 		int i;
 		for (i = 0; i < this->f->maxneighbours; ++i) {
@@ -184,15 +184,15 @@ ACT(act_dualcheck) {
 
 			int bidx = an[i];
 			if (bidx == -1) continue;
-			Tile *b = &this->f->tiles[bidx];
+			const Tile & b = this->f->tiles[bidx];
 
-			if (!(b->flags & TILE_PRESSED)) continue;
+			if (!(b.flags & TILE_PRESSED)) continue;
 
 			// get b's neighbourhood
 			bn = this->f->neighbourhood(bidx);
 
 			// get b's bomb neighbour count minus already flagged bombs
-			int bnb = b->neighbours;
+			int bnb = b.neighbours;
 			{
 				int i;
 				for (i = 0; i < this->f->maxneighbours; ++i) {
