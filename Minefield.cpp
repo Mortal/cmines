@@ -62,10 +62,14 @@ void Minefield::alloctiles() {
 		delete this->coordinatesets;
 		this->coordinatesets = NULL;
 	}
+	if (this->neighbourhoodinc == 0) {
+		this->neighbourhoodinc = new int[this->dimcount];
+	}
 	int i;
 	this->tilecount = 1;
 	this->maxneighbours = 1;
 	for (i = 0; i < this->dimcount; ++i) {
+		this->neighbourhoodinc[this->dimcount-i-1] = this->maxneighbours;
 		this->tilecount *= this->dimensions[i];
 		this->maxneighbours *= 3;
 	}
@@ -130,7 +134,7 @@ int *Minefield::neighbourhood(int root) {
 	}
 	memset(neighbours, -1, sizeof(int)*(this->maxneighbours));
 	neighbours[0] = root;
-	this->neighbourhood2(root, neighbours, 0, 3);
+	this->neighbourhood2(root, neighbours, 0);
 	return neighbours;
 }
 
@@ -145,9 +149,9 @@ void Minefield::neighbourhood_reallyfree() {
 	}
 }
 
-void Minefield::neighbourhood2(int root, int *neighbours, Dimension d, int times) {
+void Minefield::neighbourhood2(int root, int *neighbours, Dimension d) {
 	if (d >= this->dimcount) return;
-	int i, inc = this->maxneighbours/times;
+	int i, inc = this->neighbourhoodinc[d];
 	for (i = 0; i < this->maxneighbours; i += 3*inc) {
 		int input = neighbours[i];
 		if (input == -1) continue;
@@ -167,7 +171,7 @@ void Minefield::neighbourhood2(int root, int *neighbours, Dimension d, int times
 		}
 		if (inc == 1 && neighbours[i2] == root) neighbours[i2] = -1;
 	}
-	this->neighbourhood2(root, neighbours, d+1, times*3);
+	this->neighbourhood2(root, neighbours, d+1);
 }
 
 void Minefield::resettiles() {
@@ -503,6 +507,7 @@ Minefield::Minefield():
 	tilecount(0),
 	state(STATE_INIT),
 	coordinatesets(NULL),
+	neighbourhoodinc(0),
 	shouldredrawfield(0),
 	shouldresetmarks(0)
 {
@@ -517,6 +522,7 @@ Minefield::~Minefield() {
 	MAYBEFREE(tiles);
 	MAYBEFREE(dimensions);
 	MAYBEFREE(dimensionproducts);
+	MAYBEFREE(neighbourhoodinc);
 	this->neighbourhood_reallyfree();
 }
 

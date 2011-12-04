@@ -146,8 +146,11 @@ private:
 	 * Accessed via idxtocoords and coordstoidx. */
 	Coordinate *coordinatesets;
 
+	/* used in neighbourhood2() */
+	int *neighbourhoodinc;
+
 	/* neighbourhood helper */
-	void neighbourhood2(int root, int *neighbours, Dimension d, int times);
+	void neighbourhood2(int root, int *neighbours, Dimension d);
 	/* allocated neighbourhood arrays that aren't in use */
 	std::queue<int *> neighbourhoods;
 	/* dealloc all in neighbourhoods */
