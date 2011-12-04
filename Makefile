@@ -11,12 +11,12 @@ else
 endif
 
 .cpp.o:
-	g++ $(OPTS) -I/usr/include/ncurses -c $<
+	g++ $(OPTS) -std=gnu++0x -I/usr/include/ncurses -c $<
 
 OBJECTS = AI.o Minefield.o NCScreen.o NCPlayer.o DumbScreen.o SilentScreen.o
 
 all: $(OBJECTS)
-	g++ $(OPTS) $(OBJECTS) -lncurses -o cmines
+	g++ $(OPTS) -std=gnu++0x $(OBJECTS) -lncurses -o cmines
 
 clean:
 	rm -vf $(OBJECTS) cmines

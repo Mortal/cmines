@@ -124,7 +124,7 @@ int Minefield::coordstoidx(Coordinate *c) {
 }
 #endif
 
-int *Minefield::neighbourhood(int root) {
+neigh_t Minefield::neighbourhood(int root) {
 	int *neighbours;
 	if (!this->neighbourhoods.empty()) {
 		neighbours = this->neighbourhoods.front();
@@ -135,7 +135,7 @@ int *Minefield::neighbourhood(int root) {
 	memset(neighbours, -1, sizeof(int)*(this->maxneighbours));
 	neighbours[0] = root;
 	this->neighbourhood2(root, neighbours, 0);
-	return neighbours;
+	return neigh_t(neighbours, *this);
 }
 
 void Minefield::neighbourhood_free(int *neighbours) {
@@ -213,12 +213,11 @@ void Minefield::setmines() {
 		assert(idx < this->tilecount);
 #endif
 		this->tiles[idx].flags |= TILE_MINE;
-		int *neighbours = this->neighbourhood(idx);
+		neigh_t neighbours = this->neighbourhood(idx);
 		for (j = 0; j < this->maxneighbours; ++j) {
 			if (-1 == neighbours[j]) continue;
 			++this->tiles[neighbours[j]].neighbours;
 		}
-		this->neighbourhood_free(neighbours);
 	}
 }
 
@@ -229,13 +228,12 @@ void Minefield::recalcneighbours() {
 	}
 	for (i = 0; i < this->tilecount; ++i) {
 		if (!(this->tiles[i].flags & TILE_MINE)) continue;
-		int *neighbours = this->neighbourhood(i);
+		neigh_t neighbours = this->neighbourhood(i);
 		int j;
 		for (j = 0; j < this->maxneighbours; ++j) {
 			if (-1 == neighbours[j]) continue;
 			++this->tiles[neighbours[j]].neighbours;
 		}
-		this->neighbourhood_free(neighbours);
 	}
 }
 
@@ -295,13 +293,12 @@ void Minefield::ripplepress(int idx, std::queue<int> *queue) {
 	if (!this->simplepress(idx)) return;
 	Tile *tile = &this->tiles[idx];
 	if (tile->neighbours) return;
-	int *neighbours = this->neighbourhood(idx);
+	neigh_t neighbours = this->neighbourhood(idx);
 	int i;
 	for (i = 0; i < this->maxneighbours; ++i) {
 		if (neighbours[i] == -1) continue;
 		queue->push(neighbours[i]);
 	}
-	this->neighbourhood_free(neighbours);
 }
 
 void Minefield::press(int idx) {

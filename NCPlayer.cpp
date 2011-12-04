@@ -14,14 +14,13 @@ void NCPlayer::setcursor() {
 	int idx = d->cursidx;
 	this->f->resetmarks();
 	this->f->mark(idx, 1);
-	int *neighbours = this->f->neighbourhood(idx);
+	neigh_t neighbours = this->f->neighbourhood(idx);
 	int i;
 	for (i = 0; i < this->f->maxneighbours; ++i) {
 		int n = neighbours[i];
 		if (n == -1) continue;
 		this->f->mark(n, 2);
 	}
-	this->f->neighbourhood_free(neighbours);
 }
 
 Action **NCPlayer::act() {

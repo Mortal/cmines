@@ -20,8 +20,8 @@ class AI : public Player<AI> {
 		int nexttileidx();
 
 		void filterunknown(int *) const;
-		int countunknown(const int *) const;
-		int countflags(const int *) const;
+		int countunknown(const neigh_t &) const;
+		int countflags(const neigh_t &) const;
 		void neighbourdifference(int * A, const int * B); // Removes all of B from A
 
 		static bool issubset(const int *superset, const int *subset, int length);

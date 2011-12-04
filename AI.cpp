@@ -34,15 +34,15 @@ private:
 	const Minefield & field;
 };
 
-int AI::countunknown(const int *neighbours) const {
+int AI::countunknown(const neigh_t & neighbours) const {
 	// `unknown' tiles are tiles that are neither pressed nor flagged
-	return std::count_if(neighbours, neighbours + this->f->maxneighbours,
+	return std::count_if(neighbours + 0, neighbours + this->f->maxneighbours,
 		tilebyflag<TILE_PRESSED|TILE_FLAGGED, false>(*f));
 }
 
-int AI::countflags(const int *neighbours) const {
+int AI::countflags(const neigh_t & neighbours) const {
 	// flagged tiles have the TILE_FLAGGED flag set
-	return std::count_if(neighbours, neighbours + this->f->maxneighbours,
+	return std::count_if(neighbours + 0, neighbours + this->f->maxneighbours,
 		tilebyflag<TILE_FLAGGED, true>(*f));
 }
 
@@ -99,17 +99,16 @@ ACT(act_singlecheck) {
 	GETTILE(tile);
 	if (!(tile.flags & TILE_PRESSED)) return NULL;
 	if (!tile.neighbours) return NULL;
-	int *neighbours = this->f->neighbourhood(idx);
-	int neighbourunknown = countunknown((int *) neighbours);
+	neigh_t neighbours = this->f->neighbourhood(idx);
+	int neighbourunknown = countunknown(neighbours);
 	if (!neighbourunknown) return NULL;
-	int neighbourflags = countflags((int *) neighbours);
+	int neighbourflags = countflags(neighbours);
 	Action act;
 	if (tile.neighbours == neighbourflags) {
 		act.type = PRESS;
 	} else if (tile.neighbours == neighbourunknown + neighbourflags) {
 		act.type = FLAG;
 	} else {
-		this->f->neighbourhood_free(neighbours);
 		return NULL;
 	}
 
@@ -127,7 +126,6 @@ ACT(act_singlecheck) {
 		}
 	}
 	ret[retidx] = NULL;
-	this->f->neighbourhood_free(neighbours);
 	return ret;
 }
 
@@ -147,7 +145,7 @@ ACT(act_dualcheck) {
 	 */
 
 	// get a's neighbourhood
-	int *an = this->f->neighbourhood(idx);
+	neigh_t an = this->f->neighbourhood(idx);
 
 	// get a's bomb neighbour count minus already flagged bombs
 	int anb = a.neighbours;
@@ -173,13 +171,7 @@ ACT(act_dualcheck) {
 
 	{
 		int i;
-		int *bn = NULL;
 		for (i = 0; i < this->f->maxneighbours; ++i) {
-			if (bn != NULL) {
-				this->f->neighbourhood_free(bn);
-				bn = NULL;
-			}
-
 			int bidx = an[i];
 			if (bidx == -1) continue;
 			const Tile & b = this->f->tile(bidx);
@@ -187,7 +179,7 @@ ACT(act_dualcheck) {
 			if (!(b.flags & TILE_PRESSED)) continue;
 
 			// get b's neighbourhood
-			bn = this->f->neighbourhood(bidx);
+			neigh_t bn = this->f->neighbourhood(bidx);
 
 			// get b's bomb neighbour count minus already flagged bombs
 			int bnb = b.neighbours;
@@ -240,16 +232,9 @@ ACT(act_dualcheck) {
 				j++;
 			}
 			res[j] = NULL;
-			this->f->neighbourhood_free(an);
-			this->f->neighbourhood_free(bn);
 			return res;
 		}
-		if (bn != NULL) {
-			this->f->neighbourhood_free(bn);
-			bn = NULL;
-		}
 	}
-	this->f->neighbourhood_free(an);
 	return NULL;
 }
 #undef GETTILE

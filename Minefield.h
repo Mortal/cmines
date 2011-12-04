@@ -12,6 +12,8 @@
 
 char tilechar(const Tile & tile);
 
+struct neigh_t;
+
 class Minefield {
 public:
 	Minefield();
@@ -80,7 +82,7 @@ public:
 	/* Get the neighbouring indices of the tile at the given index and store them
 	 * in `neighbours'. This output array should contain at least `maxneighbours'
 	 * pointers to Coordinate sets, initially set to zero. */
-	int *neighbourhood(int idx);
+	neigh_t neighbourhood(int idx);
 	void neighbourhood_free(int *neighbours);
 
 	/* Various functions to initialise the global variables and create the game
@@ -171,6 +173,28 @@ private:
 	std::queue<Mark> marks;
 	bool shouldredrawfield;
 	bool shouldresetmarks;
+};
+
+struct neigh_t {
+	inline neigh_t(int * src, Minefield & host) : src(src), host(host) {}
+	inline int & operator[](int idx) {return src[idx];}
+	inline ~neigh_t() {if (src) host.neighbourhood_free(src);}
+	inline const int * operator+(int idx) const {return src + idx;}
+	inline neigh_t(neigh_t && other) :
+	src(other.src), host(other.host) {
+		other.src = 0;
+	}
+	inline neigh_t & operator=(neigh_t && other) {
+		if (this == &other) return *this;
+		src = other.src;
+		host = other.host;
+		other.src = 0;
+		return *this;
+	}
+private:
+	int * src;
+	Minefield & host;
+	neigh_t(const neigh_t & other) : host(*((Minefield *) 0)) {}
 };
 
 #endif
