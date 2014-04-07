@@ -1,7 +1,7 @@
 DEBUG=1
 
 ifeq ($(DEBUG),)
-	OPTS=-Wall -O3
+	OPTS=-Wall -O3 -march=native
 else
 	ifeq ($(PROFILE),)
 		OPTS=-Wall -ggdb -DDEBUG
