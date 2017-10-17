@@ -25,6 +25,19 @@ char tilechar(const Tile & tile) {
 	return 'Z';
 }
 
+int Minefield::screentoidx(int row, int column) {
+	int res = 0;
+	for (Dimension d = 0; d < this->dimcount; ++d) {
+		res *= this->dimensions[d];
+		int & v = ((d+this->dimcount) % 2 == 0) ? row : column;
+		if (d + 2 < this->dimcount && v % this->dimensiondrawproducts[d] == this->dimensiondrawproducts[d]-1)
+			return -1;
+		res += v / this->dimensiondrawproducts[d];
+		v %= this->dimensiondrawproducts[d];
+	}
+	return res;
+}
+
 int Minefield::outputcolumn(Coordinate *tile) {
 	int factor = 1;
 	int sum = 0;
@@ -471,6 +484,14 @@ int main(int argc, char *argv[]) {
 		} else if (!strcmp(arg, "-s") || !strcmp(arg, "--sleep")) {
 			f->sleep = 1;
 		}
+	}
+
+	f->dimensiondrawproducts.resize(f->dimcount);
+	f->dimensiondrawproducts[f->dimcount-1] = 1;
+	f->dimensiondrawproducts[f->dimcount-2] = 1;
+	for (Dimension d = f->dimcount-2; d-- > 0;) {
+		f->dimensiondrawproducts[d] = f->dimensions[d+2] *
+			f->dimensiondrawproducts[d+2] + 1;
 	}
 
 	if (!hasseed) {

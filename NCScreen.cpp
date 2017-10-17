@@ -41,6 +41,8 @@ void NCScreen::init() {
 	cbreak();
 	noecho();
 	curs_set(0);
+	keypad(stdscr, true);
+	mousemask(ALL_MOUSE_EVENTS, nullptr);
 
 	this->colors = has_colors();
 

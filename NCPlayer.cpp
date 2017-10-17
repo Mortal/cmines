@@ -45,6 +45,12 @@ Action **NCPlayer::act() {
 		((Tile &) this->f->tile(d->cursidx)).flags ^= TILE_MINE;
 		this->f->recalcneighbours();
 		this->f->redrawfield();
+	} else if (ch == KEY_MOUSE) {
+		MEVENT event;
+		if (getmouse(&event) == OK) {
+			int i = this->f->screentoidx(event.y, event.x);
+			if (i >= 0 && i < this->f->getTilecount()) d->cursidx = i;
+		}
 	} else {
 		int i;
 		for (i = 0; inckeys[i] != '\0' && deckeys[i] != '\0' && i < this->f->dimcount; ++i) {

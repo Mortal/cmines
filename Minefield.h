@@ -27,6 +27,10 @@ public:
 	 * i, i+1, ..., dimensioncount-1 */
 	Coordinate *dimensionproducts;
 
+	/* Entry i is equal to the tile width of the ith dimension
+	 * when rendering on a 2D screen. */
+	std::vector<Coordinate> dimensiondrawproducts;
+
 	/* Number of entries in `dimensions'. */
 	Dimension dimcount;
 
@@ -78,6 +82,8 @@ public:
 #ifdef DEBUG
 	int coordstoidx(Coordinate *c);
 #endif
+
+	int screentoidx(int row, int column);
 
 	/* Get the neighbouring indices of the tile at the given index and store them
 	 * in `neighbours'. This output array should contain at least `maxneighbours'
